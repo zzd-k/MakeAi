@@ -1,41 +1,29 @@
-<!-- 工作台页面 -->
+<!-- 数据中心页面 -->
 <template>
   <div>
-    <CardList></CardList>
+    <!-- 顶部统计卡片 -->
+    <DataCards />
 
+    <!-- 系统数据统计图表 -->
+    <SystemStats />
+
+    <!-- 用户排行榜和会话类型 -->
     <ElRow :gutter="20">
-      <ElCol :sm="24" :md="12" :lg="10">
-        <ActiveUser />
+      <ElCol :sm="24" :md="24" :lg="16">
+        <UserRanking />
       </ElCol>
-      <ElCol :sm="24" :md="12" :lg="14">
-        <SalesOverview />
+      <ElCol :sm="24" :md="24" :lg="8">
+        <SessionType />
       </ElCol>
     </ElRow>
-
-    <ElRow :gutter="20">
-      <ElCol :sm="24" :md="24" :lg="12">
-        <NewUser />
-      </ElCol>
-      <ElCol :sm="24" :md="12" :lg="6">
-        <Dynamic />
-      </ElCol>
-      <ElCol :sm="24" :md="12" :lg="6">
-        <TodoList />
-      </ElCol>
-    </ElRow>
-
-    <AboutProject />
   </div>
 </template>
 
 <script setup lang="ts">
-  import CardList from './modules/card-list.vue'
-  import ActiveUser from './modules/active-user.vue'
-  import SalesOverview from './modules/sales-overview.vue'
-  import NewUser from './modules/new-user.vue'
-  import Dynamic from './modules/dynamic-stats.vue'
-  import TodoList from './modules/todo-list.vue'
-  import AboutProject from './modules/about-project.vue'
+  import DataCards from './modules/data-cards.vue'
+  import SystemStats from './modules/system-stats.vue'
+  import UserRanking from './modules/user-ranking.vue'
+  import SessionType from './modules/session-type.vue'
 
-  defineOptions({ name: 'Console' })
+  defineOptions({ name: 'DataCenter' })
 </script>

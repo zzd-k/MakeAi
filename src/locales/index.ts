@@ -30,6 +30,7 @@ import { StorageKeyManager } from '@/utils/storage/storage-key-manager'
 // 同步导入语言文件
 import enMessages from './langs/en.json'
 import zhMessages from './langs/zh.json'
+import zhTWMessages from './langs/zh-TW.json'
 
 /**
  * 存储键管理器实例
@@ -41,7 +42,8 @@ const storageKeyManager = new StorageKeyManager()
  */
 const messages = {
   [LanguageEnum.EN]: enMessages,
-  [LanguageEnum.ZH]: zhMessages
+  [LanguageEnum.ZH]: zhMessages,
+  [LanguageEnum.ZH_TW]: zhTWMessages
 }
 
 /**
@@ -50,6 +52,7 @@ const messages = {
  */
 export const languageOptions = [
   { value: LanguageEnum.ZH, label: '简体中文' },
+  { value: LanguageEnum.ZH_TW, label: '繁體中文' },
   { value: LanguageEnum.EN, label: 'English' }
 ]
 

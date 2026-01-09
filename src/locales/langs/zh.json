@@ -257,6 +257,10 @@
       "notFound": "404",
       "serverError": "500"
     },
+    "member": {
+      "title": "会员中心",
+      "center": "会员中心"
+    },
     "system": {
       "title": "系统管理",
       "user": "用户管理",

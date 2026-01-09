@@ -3,9 +3,7 @@
     <div class="art-card-header mb-4">
       <div class="title flex items-center gap-2">
         <h4>用户排行榜</h4>
-        <div class="px-2 py-0.5 bg-warning/20 text-warning rounded text-xs font-medium">
-          2
-        </div>
+        
       </div>
     </div>
     <div class="overflow-hidden">

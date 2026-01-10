@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-  import type { EChartsOption, PieDataItem } from '@/plugins/echarts'
-  import { useChartOps, useChartComponent } from '@/hooks/core/useChart'
+  import type { EChartsOption } from '@/plugins/echarts'
+  import { useChartComponent } from '@/hooks/core/useChart'
   import type { BaseChartProps, InteractionProps } from '@/types/component/chart'
 
   defineOptions({ name: 'ArtDoughnutChart' })

@@ -48,20 +48,11 @@
   "setting": {
     "menuType": {
       "title": "選單佈局",
-      "list": [
-        "垂直",
-        "水平",
-        "混合",
-        "雙列"
-      ]
+      "list": ["垂直", "水平", "混合", "雙列"]
     },
     "theme": {
       "title": "主題風格",
-      "list": [
-        "淺色",
-        "深色",
-        "系統"
-      ]
+      "list": ["淺色", "深色", "系統"]
     },
     "menu": {
       "title": "選單風格"
@@ -71,17 +62,11 @@
     },
     "box": {
       "title": "盒子樣式",
-      "list": [
-        "邊框",
-        "陰影"
-      ]
+      "list": ["邊框", "陰影"]
     },
     "container": {
       "title": "容器寬度",
-      "list": [
-        "鋪滿",
-        "定寬"
-      ]
+      "list": ["鋪滿", "定寬"]
     },
     "basics": {
       "title": "基礎配置",
@@ -127,14 +112,8 @@
   "notice": {
     "title": "通知",
     "btnRead": "標為已讀",
-    "bar": [
-      "通知",
-      "訊息",
-      "代辦"
-    ],
-    "text": [
-      "暫無"
-    ],
+    "bar": ["通知", "訊息", "代辦"],
+    "text": ["暫無"],
     "viewAll": "查看全部"
   },
   "worktab": {
@@ -258,8 +237,25 @@
       "serverError": "500"
     },
     "member": {
-      "title": "會員中心",
-      "center": "會員中心"
+      "title": "會員中心"
+    },
+    "announcement": {
+      "title": "平台公告"
+    },
+    "sessionType": {
+      "title": "會話類型"
+    },
+    "conversation": {
+      "title": "會話管理",
+      "record": "會話記錄",
+      "like": "點讚記錄",
+      "comment": "評論記錄"
+    },
+    "settings": {
+      "title": "系統設置",
+      "basic": "基礎設置",
+      "appMenu": "APP菜單設置",
+      "userAgreement": "用戶協議配置"
     },
     "system": {
       "title": "系統管理",
@@ -296,5 +292,127 @@
     "zebra": "斑馬紋",
     "border": "邊框",
     "headerBackground": "表頭背景"
+  },
+  "pages": {
+    "basicSettings": {
+      "title": "基礎設置",
+      "servicePhone": "客服電話",
+      "pointsRule": "積分規則",
+      "perTime": "/每次",
+      "pointsRuleDesc": "每次創建會話，將按該設置賦予用戶對應積分",
+      "siteName": "站點名稱",
+      "siteNameDesc": "用於APP/PC官網/管理後台，作為系統名稱",
+      "siteDescription": "站點說明",
+      "save": "保存",
+      "saveSuccess": "保存成功",
+      "placeholder": "請輸入"
+    },
+    "appMenuSettings": {
+      "title": "APP菜單設置",
+      "name": "名稱",
+      "menuName": "菜單名稱",
+      "icon": "圖標",
+      "pathResource": "路徑資源",
+      "createTime": "創建時間",
+      "search": "搜索",
+      "reset": "重置",
+      "add": "新增",
+      "export": "導出",
+      "edit": "編輯",
+      "delete": "刪除",
+      "placeholder": "請輸入"
+    },
+    "appOrderSettings": {
+      "title": "APP採單設置",
+      "name": "名稱",
+      "orderName": "採單名稱",
+      "icon": "圖標",
+      "pathResource": "路徑資源",
+      "createTime": "創建時間",
+      "search": "搜索",
+      "reset": "重置",
+      "add": "新增",
+      "export": "導出",
+      "edit": "編輯",
+      "delete": "刪除",
+      "placeholder": "請輸入"
+    },
+    "userAgreement": {
+      "title": "用戶協議與條款說明",
+      "paragraph": "段落",
+      "heading1": "標題1",
+      "heading2": "標題2",
+      "heading3": "標題3",
+      "save": "保存",
+      "saveSuccess": "保存成功",
+      "placeholder": "請輸入文字"
+    },
+    "conversationRecord": {
+      "title": "會話記錄",
+      "titleLabel": "標題",
+      "type": "類型",
+      "isSharedToCommunity": "是否分享到社區",
+      "all": "全部",
+      "yes": "是",
+      "no": "否",
+      "search": "搜索",
+      "reset": "重置",
+      "add": "新增",
+      "export": "導出",
+      "id": "id",
+      "creator": "創建者",
+      "conversationTitle": "會話標題",
+      "conversationType": "會話類型",
+      "shareDesc": "分享描述",
+      "createTime": "創建時間",
+      "views": "瀏覽量",
+      "conversationDetail": "會話詳情",
+      "commentRecord": "評論記錄",
+      "edit": "編輯",
+      "delete": "刪除",
+      "placeholder": "請輸入"
+    },
+    "likeRecord": {
+      "title": "點讚記錄",
+      "user": "用戶",
+      "search": "搜索",
+      "reset": "重置",
+      "add": "新增",
+      "export": "導出",
+      "id": "id",
+      "conversationTitle": "會話標題",
+      "conversationId": "會話ID",
+      "likeTime": "點讚時間",
+      "actionType": "操作類型",
+      "like": "點讚",
+      "edit": "編輯",
+      "delete": "刪除",
+      "placeholder": "請輸入"
+    },
+    "commentRecord": {
+      "title": "評論記錄",
+      "user": "用戶",
+      "search": "搜索",
+      "reset": "重置",
+      "add": "新增",
+      "export": "導出",
+      "id": "id",
+      "conversationTitle": "會話標題",
+      "conversationId": "會話ID",
+      "content": "評論內容",
+      "commentTime": "評論時間",
+      "actionType": "操作類型",
+      "comment": "評論",
+      "edit": "編輯",
+      "delete": "刪除",
+      "placeholder": "請輸入"
+    },
+    "pagination": {
+      "total": "共",
+      "items": "條",
+      "perPage": "每頁",
+      "goTo": "前往",
+      "page": "頁"
+    }
   }
 }

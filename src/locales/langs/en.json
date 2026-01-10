@@ -48,20 +48,11 @@
   "setting": {
     "menuType": {
       "title": "Menu Layout",
-      "list": [
-        "Vertical",
-        "Horizontal",
-        "Mixed",
-        "Dual"
-      ]
+      "list": ["Vertical", "Horizontal", "Mixed", "Dual"]
     },
     "theme": {
       "title": "Theme Style",
-      "list": [
-        "Light",
-        "Dark",
-        "System"
-      ]
+      "list": ["Light", "Dark", "System"]
     },
     "menu": {
       "title": "Menu Style"
@@ -71,17 +62,11 @@
     },
     "box": {
       "title": "Box Style",
-      "list": [
-        "Border",
-        "Shadow"
-      ]
+      "list": ["Border", "Shadow"]
     },
     "container": {
       "title": "Container Width",
-      "list": [
-        "Full",
-        "Boxed"
-      ]
+      "list": ["Full", "Boxed"]
     },
     "basics": {
       "title": "Basic Config",
@@ -127,14 +112,8 @@
   "notice": {
     "title": "Notice",
     "btnRead": "Mark as read",
-    "bar": [
-      "Notice",
-      "Message",
-      "Todo"
-    ],
-    "text": [
-      "No"
-    ],
+    "bar": ["Notice", "Message", "Todo"],
+    "text": ["No"],
     "viewAll": "View all"
   },
   "worktab": {
@@ -258,8 +237,25 @@
       "serverError": "500"
     },
     "member": {
-      "title": "Member Center",
-      "center": "Member Center"
+      "title": "Member Center"
+    },
+    "announcement": {
+      "title": "Announcement"
+    },
+    "sessionType": {
+      "title": "Session Type"
+    },
+    "conversation": {
+      "title": "Conversation",
+      "record": "Conversation Record",
+      "like": "Like Record",
+      "comment": "Comment Record"
+    },
+    "settings": {
+      "title": "Settings",
+      "basic": "Basic Settings",
+      "appMenu": "APP Menu Settings",
+      "userAgreement": "User Agreement"
     },
     "system": {
       "title": "System Settings",
@@ -296,5 +292,127 @@
     "zebra": "Zebra",
     "border": "Border",
     "headerBackground": "Header BG"
+  },
+  "pages": {
+    "basicSettings": {
+      "title": "Basic Settings",
+      "servicePhone": "Service Phone",
+      "pointsRule": "Points Rule",
+      "perTime": "/per time",
+      "pointsRuleDesc": "Each time a session is created, the corresponding points will be given to the user according to this setting",
+      "siteName": "Site Name",
+      "siteNameDesc": "Used for APP/PC website/admin backend as the system name",
+      "siteDescription": "Site Description",
+      "save": "Save",
+      "saveSuccess": "Saved successfully",
+      "placeholder": "Please enter"
+    },
+    "appMenuSettings": {
+      "title": "APP Menu Settings",
+      "name": "Name",
+      "menuName": "Menu Name",
+      "icon": "Icon",
+      "pathResource": "Path Resource",
+      "createTime": "Create Time",
+      "search": "Search",
+      "reset": "Reset",
+      "add": "Add",
+      "export": "Export",
+      "edit": "Edit",
+      "delete": "Delete",
+      "placeholder": "Please enter"
+    },
+    "appOrderSettings": {
+      "title": "APP Order Settings",
+      "name": "Name",
+      "orderName": "Order Name",
+      "icon": "Icon",
+      "pathResource": "Path Resource",
+      "createTime": "Create Time",
+      "search": "Search",
+      "reset": "Reset",
+      "add": "Add",
+      "export": "Export",
+      "edit": "Edit",
+      "delete": "Delete",
+      "placeholder": "Please enter"
+    },
+    "userAgreement": {
+      "title": "User Agreement and Terms",
+      "paragraph": "Paragraph",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "save": "Save",
+      "saveSuccess": "Saved successfully",
+      "placeholder": "Please enter text"
+    },
+    "conversationRecord": {
+      "title": "Conversation Record",
+      "titleLabel": "Title",
+      "type": "Type",
+      "isSharedToCommunity": "Shared to Community",
+      "all": "All",
+      "yes": "Yes",
+      "no": "No",
+      "search": "Search",
+      "reset": "Reset",
+      "add": "Add",
+      "export": "Export",
+      "id": "ID",
+      "creator": "Creator",
+      "conversationTitle": "Conversation Title",
+      "conversationType": "Conversation Type",
+      "shareDesc": "Share Description",
+      "createTime": "Create Time",
+      "views": "Views",
+      "conversationDetail": "Conversation Detail",
+      "commentRecord": "Comment Record",
+      "edit": "Edit",
+      "delete": "Delete",
+      "placeholder": "Please enter"
+    },
+    "likeRecord": {
+      "title": "Like Record",
+      "user": "User",
+      "search": "Search",
+      "reset": "Reset",
+      "add": "Add",
+      "export": "Export",
+      "id": "ID",
+      "conversationTitle": "Conversation Title",
+      "conversationId": "Conversation ID",
+      "likeTime": "Like Time",
+      "actionType": "Action Type",
+      "like": "Like",
+      "edit": "Edit",
+      "delete": "Delete",
+      "placeholder": "Please enter"
+    },
+    "commentRecord": {
+      "title": "Comment Record",
+      "user": "User",
+      "search": "Search",
+      "reset": "Reset",
+      "add": "Add",
+      "export": "Export",
+      "id": "ID",
+      "conversationTitle": "Conversation Title",
+      "conversationId": "Conversation ID",
+      "content": "Comment Content",
+      "commentTime": "Comment Time",
+      "actionType": "Action Type",
+      "comment": "Comment",
+      "edit": "Edit",
+      "delete": "Delete",
+      "placeholder": "Please enter"
+    },
+    "pagination": {
+      "total": "Total",
+      "items": "items",
+      "perPage": "Per page",
+      "goTo": "Go to",
+      "page": "page"
+    }
   }
 }

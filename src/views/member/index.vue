@@ -24,12 +24,7 @@
 
     <!-- 数据表格 -->
     <div class="art-card p-5">
-      <ArtTable
-        :data="displayData"
-        style="width: 100%"
-        :border="true"
-        :stripe="true"
-      >
+      <ArtTable :data="displayData" style="width: 100%" :border="true" :stripe="true">
         <template #default>
           <ElTableColumn label="序号" type="index" width="80" align="center" />
           <ElTableColumn label="会员号" prop="memberId" width="100" align="center">
@@ -95,29 +90,14 @@
           <ElTableColumn label="操作" width="450" align="center" fixed="right">
             <template #default="scope">
               <div class="flex items-center justify-center gap-2">
-                <ElButton
-                  type="info"
-                  size="small"
-                  plain
-                  @click="handleSessionStats(scope.row)"
-                >
+                <ElButton type="info" size="small" plain @click="handleSessionStats(scope.row)">
                   会话统计
                 </ElButton>
-                <ElButton
-                  type="primary"
-                  size="small"
-                  plain
-                  @click="handleShareRead(scope.row)"
-                >
+                <ElButton type="primary" size="small" plain @click="handleShareRead(scope.row)">
                   分享/阅读
                 </ElButton>
-                <ElButton
-                  type="warning"
-                  size="small"
-                  plain
-                  @click="handlePersonalCard(scope.row)"
-                >
-                  个人名片
+                <ElButton type="warning" size="small" plain @click="handlePersonalCard(scope.row)">
+                  卡片管理
                 </ElButton>
                 <ElButton type="success" size="small" link @click="handleEdit(scope.row)">
                   编辑
@@ -132,11 +112,18 @@
       </ArtTable>
 
       <!-- 分页 -->
-      <div class="flex items-center justify-between mt-4 pt-3 border-t border-g-200 text-sm text-g-600">
+      <div
+        class="flex items-center justify-between mt-4 pt-3 border-t border-g-200 text-sm text-g-600"
+      >
         <div class="flex items-center gap-2">
           <span>共 {{ total }} 条</span>
           <span>每页</span>
-          <ElSelect v-model="pageSize" size="small" style="width: 70px" @change="handlePageSizeChange">
+          <ElSelect
+            v-model="pageSize"
+            size="small"
+            style="width: 70px"
+            @change="handlePageSizeChange"
+          >
             <ElOption label="10" :value="10" />
             <ElOption label="20" :value="20" />
             <ElOption label="50" :value="50" />
@@ -274,10 +261,10 @@
   }
 
   /**
-   * 个人名片
+   * 卡片管理
    */
   const handlePersonalCard = (row: MemberItem) => {
-    console.log('个人名片', row)
+    console.log('卡片管理', row)
   }
 
   /**

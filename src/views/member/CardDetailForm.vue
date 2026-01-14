@@ -28,13 +28,13 @@
           <ElFormItem label="中文姓氏">
             <ElInput v-model="form.lastNameZh" placeholder="请输入" />
           </ElFormItem>
-          <ElFormItem label="中文名字">
+          <ElFormItem label="中文名">
             <ElInput v-model="form.firstNameZh" placeholder="请输入" />
           </ElFormItem>
           <ElFormItem label="英文姓氏">
             <ElInput v-model="form.lastNameEn" placeholder="请输入" />
           </ElFormItem>
-          <ElFormItem label="英文名字">
+          <ElFormItem label="英文名">
             <ElInput v-model="form.firstNameEn" placeholder="请输入" />
           </ElFormItem>
         </div>
@@ -180,7 +180,7 @@
         <div class="space-x-3">
           <span class="font-semibold">自我介绍</span>
           <ElButton size="small" @click="handleAddIntroImg">添加照片</ElButton>
-          <ElButton size="small" @click="handleAddIntroVideo">添加AI自我介绍</ElButton>
+          <ElButton size="small" @click="introVisible = true">添加AI自我介绍</ElButton>
         </div>
       </div>
     </div>
@@ -190,9 +190,13 @@
       <ElButton type="primary" @click="save">保存</ElButton>
     </template>
   </ElDialog>
+  <IntroList v-model:visible="introVisible" />
 </template>
 
 <script setup lang="ts">
+  import IntroList from './components/IntroList.vue'
+
+  const introVisible = ref(false)
   import DynamicTab from './components/DynamicTab.vue'
   import { UploadFilled } from '@element-plus/icons-vue'
   import ContactTab from './components/ContactTab.vue'
@@ -335,7 +339,6 @@
   }
 
   const handleAddIntroImg = () => ElMessage.info('TODO 添加照片')
-  const handleAddIntroVideo = () => ElMessage.info('TODO AI介绍')
 
   const save = () => {
     emit('save', JSON.parse(JSON.stringify(form)))

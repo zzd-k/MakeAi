@@ -43,8 +43,6 @@
           <ElInput v-model="c.value" :placeholder="getMeta(c.type).placeholder || c.label">
             <template v-if="getMeta(c.type).prefix" #prepend>{{ getMeta(c.type).prefix }}</template>
           </ElInput>
-          <!-- Twitter 等需要显示文本的情况 -->
-          <ElInput v-if="c.type === 'twitter'" v-model="c.extra" placeholder="显示文本" />
         </template>
       </div>
     </div>
@@ -102,7 +100,11 @@
     website: { placeholder: 'www.example.com' },
     twitter: { prefix: 'https://twitter.com/@' },
     facebook: { prefix: 'https://facebook.com/' },
-    instagram: { prefix: 'https://instagram.com/' }
+    instagram: { prefix: 'https://instagram.com/' },
+    snapchat: { prefix: 'https://snapchat.com/add/' },
+    linkedin: { prefix: 'https://linkedin.com/in/' },
+    pinterest: { prefix: 'https://pinterest.com/' },
+    tiktok: { prefix: 'https://tiktok.com/@' }
   }
   function getMeta(type: string) {
     return fieldMeta[type] || {}

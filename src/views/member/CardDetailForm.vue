@@ -5,7 +5,9 @@
       <ElTabPane label="联系方式" name="contact">
         <ContactTab v-model="form.contacts" />
       </ElTabPane>
-      <ElTabPane label="产品" name="product" />
+      <ElTabPane label="产品" name="product">
+        <ProductTab v-model="form.products" />
+      </ElTabPane>
       <ElTabPane label="动态" name="trend" />
       <ElTabPane label="主题" name="theme" />
     </ElTabs>
@@ -192,6 +194,7 @@
 <script setup lang="ts">
   import { UploadFilled } from '@element-plus/icons-vue'
   import ContactTab from './components/ContactTab.vue'
+  import ProductTab from './components/ProductTab.vue'
   import { ElMessage } from 'element-plus'
 
   defineProps<{ visible: boolean; dialogTitle: string }>()
@@ -231,6 +234,7 @@
     positions: PositionItem[]
     partners: PartnerItem[]
     contacts: ContactItem[]
+    products: ProductItem[]
   }
 
   const defaultInterests = [
@@ -265,7 +269,13 @@
     '程式设计',
     '宠物饲养'
   ]
-
+  interface ProductItem {
+    id: number
+    title: string
+    cover: string
+    url: string
+    desc: string
+  }
   const form = reactive<CardForm>({
     title: '',
     position: '',
@@ -281,7 +291,8 @@
     interests: [],
     positions: [],
     partners: [],
-    contacts: []
+    contacts: [],
+    products: []
   })
 
   // tag inputs

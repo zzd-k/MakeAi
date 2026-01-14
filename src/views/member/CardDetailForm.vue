@@ -2,7 +2,9 @@
   <ElDialog :model-value="visible" :title="dialogTitle" width="80%" @close="emitClose">
     <ElTabs v-model="activeTab" class="mb-6">
       <ElTabPane label="基础设置" name="basic" />
-      <ElTabPane label="联系方式" name="contact" />
+      <ElTabPane label="联系方式" name="contact">
+        <ContactTab v-model="form.contacts" />
+      </ElTabPane>
       <ElTabPane label="产品" name="product" />
       <ElTabPane label="动态" name="trend" />
       <ElTabPane label="主题" name="theme" />
@@ -189,6 +191,7 @@
 
 <script setup lang="ts">
   import { UploadFilled } from '@element-plus/icons-vue'
+  import ContactTab from './components/ContactTab.vue'
   import { ElMessage } from 'element-plus'
 
   defineProps<{ visible: boolean; dialogTitle: string }>()
@@ -202,6 +205,14 @@
   interface PartnerItem {
     logo: string
     name: string
+  }
+
+  interface ContactItem {
+    id: number
+    type: string
+    label: string
+    value: string
+    extra?: string
   }
 
   interface CardForm {
@@ -219,6 +230,7 @@
     interests: string[]
     positions: PositionItem[]
     partners: PartnerItem[]
+    contacts: ContactItem[]
   }
 
   const defaultInterests = [
@@ -268,7 +280,8 @@
     industryTags: [],
     interests: [],
     positions: [],
-    partners: []
+    partners: [],
+    contacts: []
   })
 
   // tag inputs

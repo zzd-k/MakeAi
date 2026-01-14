@@ -195,9 +195,13 @@
               <ElTableColumn label="产品" prop="product" width="100" align="center" />
               <ElTableColumn label="动态" prop="trend" width="100" align="center" />
               <ElTableColumn label="操作" width="200" align="center" fixed="right">
-                <template #default>
-                  <ElButton type="primary" size="small" link>预览</ElButton>
-                  <ElButton type="success" size="small" link>编辑</ElButton>
+                <template #default="scope">
+                  <ElButton type="primary" size="small" link @click="handleCardPreview(scope.row)"
+                    >预览</ElButton
+                  >
+                  <ElButton type="success" size="small" link @click="handleCardEdit(scope.row)"
+                    >编辑</ElButton
+                  >
                   <ElButton type="danger" size="small" link>删除</ElButton>
                 </template>
               </ElTableColumn>
@@ -229,11 +233,19 @@
         </div>
       </template>
     </ElDialog>
+
+    <!-- 卡片新增/编辑弹窗 -->
+    <CardDetailForm
+      v-model:visible="editVisible"
+      :dialog-title="editMode === 'create' ? '新增名片' : '卡片详情'"
+      @save="handleSaveCard"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
   import avatar1 from '@/assets/images/avatar/avatar1.webp'
+  import CardDetailForm from './CardDetailForm.vue'
 
   defineOptions({ name: 'MemberCenter' })
 
@@ -312,13 +324,33 @@
   /**
    * 新增
    */
+  const editVisible = ref(false)
+  const editMode = ref<'create' | 'edit'>('create')
+  const currentCard = ref<CardItem | null>(null)
+
+  const handleCardEdit = (row: CardItem) => {
+    currentCard.value = row
+    editMode.value = 'edit'
+    editVisible.value = true
+  }
+
   const handleAdd = () => {
-    console.log('新增')
+    currentCard.value = null
+    editMode.value = 'create'
+    editVisible.value = true
   }
 
   /**
    * 导出
    */
+  const handleSaveCard = (data: CardItem) => {
+    if (editMode.value === 'create') {
+      cardTableData.push({ id: Date.now(), ...data })
+    } else if (currentCard.value) {
+      Object.assign(currentCard.value, data)
+    }
+  }
+
   const handleExport = () => {
     console.log('导出')
   }
@@ -393,7 +425,7 @@
    * 卡片管理表格数据
    */
   interface CardItem {
-    id: number
+    id?: number
     title: string
     intro: string
     firstNameEn: string
@@ -428,4 +460,12 @@
     }
   ])
   const cardTotal = computed(() => cardTableData.length)
+
+  const handleCardPreview = (row: CardItem) => {
+    console.log('预览', row)
+  }
+  // const handleCardDelete = (row: CardItem) => {
+  //   const idx = cardTableData.indexOf(row)
+  //   if (idx > -1) cardTableData.splice(idx, 1)
+  // }
 </script>

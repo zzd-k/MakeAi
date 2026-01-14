@@ -8,8 +8,9 @@
       <ElTabPane label="产品" name="product">
         <ProductTab v-model="form.products" />
       </ElTabPane>
-      <ElTabPane label="动态" name="trend" />
-      <ElTabPane label="主题" name="theme" />
+      <ElTabPane label="动态" name="trend">
+        <DynamicTab v-model="form.products" />
+      </ElTabPane>
     </ElTabs>
 
     <!-- 基础设置 TAB -->
@@ -192,6 +193,7 @@
 </template>
 
 <script setup lang="ts">
+  import DynamicTab from './components/DynamicTab.vue'
   import { UploadFilled } from '@element-plus/icons-vue'
   import ContactTab from './components/ContactTab.vue'
   import ProductTab from './components/ProductTab.vue'
@@ -235,6 +237,7 @@
     partners: PartnerItem[]
     contacts: ContactItem[]
     products: ProductItem[]
+    dynamics: ProductItem[]
   }
 
   const defaultInterests = [
@@ -269,6 +272,7 @@
     '程式设计',
     '宠物饲养'
   ]
+
   interface ProductItem {
     id: number
     title: string
@@ -292,7 +296,8 @@
     positions: [],
     partners: [],
     contacts: [],
-    products: []
+    products: [],
+    dynamics: []
   })
 
   // tag inputs

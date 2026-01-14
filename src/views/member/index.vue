@@ -152,6 +152,83 @@
         </div>
       </div>
     </div>
+    <!-- 卡片管理弹窗 -->
+    <ElDialog
+      v-model="cardDialogVisible"
+      title="卡片管理"
+      width="80%"
+      @close="handleCloseCardDialog"
+    >
+      <template #default>
+        <!-- 卡片管理内容 -->
+        <div class="p-5">
+          <!-- 搜索 + 操作栏 -->
+          <div class="p-5 mb-5 flex items-center flex-nowrap gap-4">
+            <ElForm :inline="true" class="flex items-center gap-4 flex-1">
+              <ElFormItem>
+                <ElInput v-model="cardSearch" placeholder="请输入" clearable />
+              </ElFormItem>
+              <ElFormItem>
+                <ElButton type="primary">搜索</ElButton>
+                <ElButton type="primary">新增</ElButton>
+                <ElButton>导出</ElButton>
+              </ElFormItem>
+            </ElForm>
+          </div>
+          <!-- 表格 -->
+          <ArtTable :data="cardTableData" style="width: 100%" :border="true" :stripe="true">
+            <template #default>
+              <ElTableColumn label="ID" prop="id" width="80" align="center" />
+              <ElTableColumn label="名片称谓" prop="title" width="120" />
+              <ElTableColumn label="自我介绍" prop="intro" width="120">
+                <template #default="scope">
+                  <img :src="scope.row.intro" class="size-12 rounded-lg object-cover" />
+                </template>
+              </ElTableColumn>
+              <ElTableColumn label="英文名" prop="firstNameEn" width="120" />
+              <ElTableColumn label="英文姓氏" prop="lastNameEn" width="120" />
+              <ElTableColumn label="中文名" prop="firstName" width="120" />
+              <ElTableColumn label="中文姓氏" prop="lastName" width="120" />
+              <ElTableColumn label="联系电话" prop="phone" width="140" />
+              <ElTableColumn label="邮箱" prop="email" width="160" />
+              <ElTableColumn label="公司信息" prop="company" width="200" />
+              <ElTableColumn label="产品" prop="product" width="100" align="center" />
+              <ElTableColumn label="动态" prop="trend" width="100" align="center" />
+              <ElTableColumn label="操作" width="200" align="center" fixed="right">
+                <template #default>
+                  <ElButton type="primary" size="small" link>预览</ElButton>
+                  <ElButton type="success" size="small" link>编辑</ElButton>
+                  <ElButton type="danger" size="small" link>删除</ElButton>
+                </template>
+              </ElTableColumn>
+            </template>
+          </ArtTable>
+          <!-- 分页 -->
+          <div
+            class="flex items-center justify-between mt-4 pt-3 border-t border-g-200 text-sm text-g-600"
+          >
+            <div class="flex items-center gap-2">
+              <span>共 {{ cardTotal }} 条</span>
+              <span>每页</span>
+              <ElSelect v-model="cardPageSize" size="small" style="width: 70px">
+                <ElOption label="10" :value="10" />
+                <ElOption label="20" :value="20" />
+                <ElOption label="50" :value="50" />
+              </ElSelect>
+              <span>条</span>
+            </div>
+            <ElPagination
+              small
+              background
+              layout="prev, pager, next"
+              :total="cardTotal"
+              :page-size="cardPageSize"
+              v-model:current-page="cardCurrentPage"
+            />
+          </div>
+        </div>
+      </template>
+    </ElDialog>
   </div>
 </template>
 
@@ -263,8 +340,21 @@
   /**
    * 卡片管理
    */
+  /**
+   * 卡片管理 - 打开弹窗
+   */
+  const cardDialogVisible = ref(false)
+
   const handlePersonalCard = (row: MemberItem) => {
     console.log('卡片管理', row)
+    cardDialogVisible.value = true
+  }
+
+  /**
+   * 关闭卡片管理弹窗
+   */
+  const handleCloseCardDialog = () => {
+    cardDialogVisible.value = false
   }
 
   /**
@@ -299,4 +389,43 @@
       jumpPage.value = ''
     }
   }
+  /**
+   * 卡片管理表格数据
+   */
+  interface CardItem {
+    id: number
+    title: string
+    intro: string
+    firstNameEn: string
+    lastNameEn: string
+    firstName: string
+    lastName: string
+    phone: string
+    email: string
+    company: string
+    product: number
+    trend: number
+  }
+
+  const cardSearch = ref('')
+  const cardPageSize = ref(10)
+  const cardCurrentPage = ref(1)
+
+  const cardTableData = reactive<CardItem[]>([
+    {
+      id: 1,
+      title: '【範例】陳嘉欣',
+      intro: avatar1,
+      firstNameEn: 'Jack',
+      lastNameEn: 'Ma',
+      firstName: '马',
+      lastName: '云',
+      phone: '123456789',
+      email: 'jack@example.com',
+      company: '阿里巴巴',
+      product: 12,
+      trend: 3
+    }
+  ])
+  const cardTotal = computed(() => cardTableData.length)
 </script>

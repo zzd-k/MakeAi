@@ -89,6 +89,28 @@ const getDefaultLanguage = (): LanguageEnum => {
     console.warn('[i18n] 从系统存储获取语言设置失败:', error)
   }
 
+  // 尝试从浏览器首选语言获取
+  try {
+    const browserLang = navigator.language.toLowerCase()
+
+    if (browserLang.includes('zh-tw') || browserLang.includes('zh-hk')) {
+      console.debug('[i18n] 检测到浏览器语言: 繁体中文')
+      return LanguageEnum.ZH_TW
+    }
+
+    if (browserLang.includes('zh')) {
+      console.debug('[i18n] 检测到浏览器语言: 简体中文')
+      return LanguageEnum.ZH
+    }
+
+    if (browserLang.includes('en')) {
+      console.debug('[i18n] 检测到浏览器语言: 英文')
+      return LanguageEnum.EN
+    }
+  } catch (error) {
+    console.warn('[i18n] 获取浏览器语言失败:', error)
+  }
+
   // 返回默认语言
   console.debug('[i18n] 使用默认语言:', LanguageEnum.ZH)
   return LanguageEnum.ZH

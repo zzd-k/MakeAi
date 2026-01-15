@@ -2,8 +2,7 @@
   <div class="art-card p-5 mb-5 h-140">
     <div class="art-card-header mb-4">
       <div class="title flex items-center gap-2">
-        <h4>用户排行榜</h4>
-        
+        <h4>{{ $t('pages.dataCenter.userRanking.title') }}</h4>
       </div>
     </div>
     <div class="overflow-hidden">
@@ -17,7 +16,12 @@
         :header-cell-style="{ background: 'transparent', fontWeight: '600' }"
       >
         <template #default>
-          <ElTableColumn label="排名" prop="rank" width="80px" align="center">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.rank')"
+            prop="rank"
+            width="80px"
+            align="center"
+          >
             <template #default="scope">
               <div
                 class="inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold"
@@ -27,49 +31,89 @@
               </div>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="昵称" prop="nickname" min-width="100px">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.nickname')"
+            prop="nickname"
+            min-width="100px"
+          >
             <template #default="scope">
               <span class="font-medium">{{ scope.row.nickname }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="用户ID" prop="userId" min-width="120px">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.userId')"
+            prop="userId"
+            min-width="120px"
+          >
             <template #default="scope">
               <span class="text-g-500 text-sm font-mono">{{ scope.row.userId }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="积分" prop="points" width="100px" align="center">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.points')"
+            prop="points"
+            width="100px"
+            align="center"
+          >
             <template #default="scope">
               <span class="font-semibold text-primary">{{ scope.row.points }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="验证会话" prop="verifiedSessions" width="100px" align="center">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.verifiedSessions')"
+            prop="verifiedSessions"
+            width="100px"
+            align="center"
+          >
             <template #default="scope">
               <span class="font-medium">{{ scope.row.verifiedSessions }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="分享中会话" prop="sharingSessions" width="110px" align="center">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.sharingSessions')"
+            prop="sharingSessions"
+            width="110px"
+            align="center"
+          >
             <template #default="scope">
               <span class="font-medium">{{ scope.row.sharingSessions }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="操作" width="80px" align="center" fixed="right">
+          <ElTableColumn
+            :label="$t('pages.dataCenter.userRanking.columns.operation')"
+            width="80px"
+            align="center"
+            fixed="right"
+          >
             <template #default>
-              <ElButton type="primary" link size="small">查看</ElButton>
+              <ElButton type="primary" link size="small">{{
+                $t('pages.dataCenter.userRanking.actions.view')
+              }}</ElButton>
             </template>
           </ElTableColumn>
         </template>
       </ArtTable>
     </div>
-    <div class="flex items-center justify-between mt-4 pt-3 border-t border-g-200 text-sm text-g-600">
+    <div
+      class="flex items-center justify-between mt-4 pt-3 border-t border-g-200 text-sm text-g-600"
+    >
       <div class="flex items-center gap-2">
-        <span>共 {{ total }} 条</span>
-        <span>每页</span>
-        <ElSelect v-model="pageSize" size="small" style="width: 70px" @change="handlePageSizeChange">
+        <span
+          >{{ $t('pages.dataCenter.userRanking.pagination.totalPrefix') }} {{ total }}
+          {{ $t('pages.dataCenter.userRanking.pagination.items') }}</span
+        >
+        <span>{{ $t('pages.dataCenter.userRanking.pagination.perPage') }}</span>
+        <ElSelect
+          v-model="pageSize"
+          size="small"
+          style="width: 70px"
+          @change="handlePageSizeChange"
+        >
           <ElOption label="10" :value="10" />
           <ElOption label="20" :value="20" />
           <ElOption label="50" :value="50" />
         </ElSelect>
-        <span>条</span>
+        <span>{{ $t('pages.dataCenter.userRanking.pagination.items') }}</span>
       </div>
       <div class="flex items-center gap-2">
         <ElPagination
@@ -175,8 +219,9 @@
   /**
    * 获取排名样式
    */
-  const getRankClass = (rank: number) => {
-    
+  const getRankClass = (_rank: number) => {
+    // 变量暂未使用，但保留参数以便未来可按排名自定义样式
+    void _rank
     return 'bg-g-100 text-g-600'
   }
 

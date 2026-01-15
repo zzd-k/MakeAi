@@ -294,6 +294,30 @@
     "headerBackground": "Header BG"
   },
   "pages": {
+    "dataCenter": {
+      "userRanking": {
+        "title": "User Ranking",
+        "columns": {
+          "rank": "Rank",
+          "nickname": "Nickname",
+          "userId": "User ID",
+          "points": "Points",
+          "verifiedSessions": "Verified Sessions",
+          "sharingSessions": "Sharing Sessions",
+          "operation": "Operation"
+        },
+        "actions": {
+          "view": "View"
+        },
+        "pagination": {
+          "totalPrefix": "Total",
+          "items": "items",
+          "perPage": "per page",
+          "go": "Go to",
+          "page": "page"
+        }
+      }
+    },
     "basicSettings": {
       "title": "Basic Settings",
       "servicePhone": "Service Phone",

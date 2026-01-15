@@ -294,6 +294,30 @@
     "headerBackground": "表頭背景"
   },
   "pages": {
+    "dataCenter": {
+      "userRanking": {
+        "title": "用戶排行榜",
+        "columns": {
+          "rank": "排名",
+          "nickname": "暱稱",
+          "userId": "用戶ID",
+          "points": "積分",
+          "verifiedSessions": "驗證會話",
+          "sharingSessions": "分享中會話",
+          "operation": "操作"
+        },
+        "actions": {
+          "view": "查看"
+        },
+        "pagination": {
+          "totalPrefix": "共",
+          "items": "條",
+          "perPage": "每頁",
+          "go": "前往",
+          "page": "頁"
+        }
+      }
+    },
     "basicSettings": {
       "title": "基礎設置",
       "servicePhone": "客服電話",

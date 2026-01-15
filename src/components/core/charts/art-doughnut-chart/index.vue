@@ -3,7 +3,7 @@
   <div
     ref="chartRef"
     class="relative w-full"
-    :style="{ height: props.height }"
+    :style="{ height: props.height, overflow: 'visible' }"
     v-loading="props.loading"
   >
   </div>
@@ -84,7 +84,9 @@
               position: 'outside',
               formatter: '{b}\n{d}%',
               color: isDark.value ? '#ccc' : '#666',
-              fontSize: 12
+              fontSize: 12,
+              width: 80,
+              overflow: 'break'
             },
             emphasis: {
               label: {

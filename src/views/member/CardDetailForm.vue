@@ -201,11 +201,15 @@
   import { UploadFilled } from '@element-plus/icons-vue'
   import ContactTab from './components/ContactTab.vue'
   import ProductTab from './components/ProductTab.vue'
+  import IntroCreate from './components/IntroCreate.vue'
   import { ElMessage } from 'element-plus'
 
   defineProps<{ visible: boolean; dialogTitle: string }>()
   const emit = defineEmits(['update:visible', 'save'])
   const activeTab = ref('basic')
+
+  // AI自我介绍对话框
+  const showIntroDialog = ref(false)
 
   interface PositionItem {
     title: string

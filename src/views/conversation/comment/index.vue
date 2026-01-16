@@ -149,6 +149,8 @@
 
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
+  import { fetchAdminRecords, deleteAdminRecord } from '@/api/admin'
+  import { ElMessage, ElMessageBox } from 'element-plus'
 
   defineOptions({ name: 'CommentRecord' })
 
@@ -171,63 +173,132 @@
   const pageSize = ref(10)
   const currentPage = ref(1)
   const jumpPage = ref('')
+  const loading = ref(false)
 
-  const tableData = reactive<CommentItem[]>([
-    {
-      id: 121,
-      title: 'Ben会话金融2025-2-11',
-      conversationId: '12311',
-      user: 'HY-211232131',
-      content: '很棒',
-      commentTime: '2025-9-2 21:55:29',
-      actionType: '评论'
-    }
-  ])
-
-  const total = computed(() => tableData.length)
+  const tableData = ref<CommentItem[]>([])
+  const total = ref(0)
 
   const displayData = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value
-    const end = start + pageSize.value
-    return tableData.slice(start, end)
+    return tableData.value
   })
 
-  const handleSearch = () => {
-    console.log('搜索', searchForm)
-    currentPage.value = 1
+  // 格式化时间
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return '-'
+    try {
+      const date = new Date(timeStr)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    } catch {
+      return timeStr
+    }
   }
 
+  // 获取评论记录列表
+  const fetchCommentRecords = async () => {
+    try {
+      loading.value = true
+      const res = await fetchAdminRecords({
+        page: currentPage.value,
+        page_size: pageSize.value
+      })
+
+      console.log('后端返回的数据:', res) // 调试用，查看实际返回的数据结构
+
+      // 将后端数据转换为前端需要的格式
+      tableData.value = res.items.map((item: any) => ({
+        id: item.id,
+        title: item.meeting_name || item.title || `会议记录-${item.id}`,
+        conversationId: String(item.id),
+        user: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
+        content: item.content || item.description || '很棒',
+        commentTime: formatTime(item.created_at),
+        actionType: '评论'
+      }))
+
+      total.value = res.total
+    } catch (error) {
+      ElMessage.error('获取评论记录失败')
+      console.error(error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 搜索
+  const handleSearch = () => {
+    currentPage.value = 1
+    fetchCommentRecords()
+  }
+
+  // 重置
   const handleReset = () => {
     searchForm.user = ''
     currentPage.value = 1
+    fetchCommentRecords()
   }
 
   const handleAdd = () => {
-    console.log('新增')
+    ElMessage.info('新增功能开发中')
   }
 
   const handleExport = () => {
-    console.log('导出')
+    ElMessage.info('导出功能开发中')
   }
 
-  const handleEdit = (row: CommentItem) => {
-    console.log('编辑', row)
+  const handleEdit = () => {
+    ElMessage.info('编辑功能开发中')
   }
 
-  const handleDelete = (row: CommentItem) => {
-    console.log('删除', row)
+  // 删除
+  const handleDelete = async (row: CommentItem) => {
+    try {
+      await ElMessageBox.confirm('确定要删除这条评论记录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+
+      await deleteAdminRecord(row.id)
+      ElMessage.success('删除成功')
+      fetchCommentRecords()
+    } catch (error) {
+      if (error !== 'cancel') {
+        ElMessage.error('删除失败')
+        console.error(error)
+      }
+    }
   }
 
+  // 分页大小改变
   const handlePageSizeChange = () => {
     currentPage.value = 1
+    fetchCommentRecords()
   }
 
+  // 跳转页面
   const handleJumpPage = () => {
     const page = parseInt(jumpPage.value)
     const totalPages = Math.ceil(total.value / pageSize.value)
     if (page && page > 0 && page <= totalPages) {
       currentPage.value = page
       jumpPage.value = ''
+      fetchCommentRecords()
     }
   }
+
+  // 监听当前页变化
+  watch(currentPage, () => {
+    fetchCommentRecords()
+  })
+
+  // 初始化加载数据
+  onMounted(() => {
+    fetchCommentRecords()
+  })
 </script>

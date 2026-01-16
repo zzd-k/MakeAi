@@ -45,7 +45,7 @@
   interface Props {
     visible: boolean
     type: string
-    userData?: Partial<Api.SystemManage.UserListItem>
+    userData?: Partial<Api.Admin.User> | Record<string, any>
   }
 
   interface Emits {
@@ -98,13 +98,13 @@
    */
   const initFormData = () => {
     const isEdit = props.type === 'edit' && props.userData
-    const row = props.userData
+    const row = props.userData as any
 
     Object.assign(formData, {
-      username: isEdit && row ? row.userName || '' : '',
-      phone: isEdit && row ? row.userPhone || '' : '',
-      gender: isEdit && row ? row.userGender || '男' : '男',
-      role: isEdit && row ? (Array.isArray(row.userRoles) ? row.userRoles : []) : []
+      username: isEdit && row ? row.username || '' : '',
+      phone: isEdit && row ? row.phone || '' : '',
+      gender: isEdit && row ? row.gender || '男' : '男',
+      role: isEdit && row ? (Array.isArray(row.roles) ? row.roles : []) : []
     })
   }
 

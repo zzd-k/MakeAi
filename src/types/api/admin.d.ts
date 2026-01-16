@@ -50,10 +50,14 @@ declare namespace Api {
     /** 会议记录 */
     interface RecordItem {
       id: number
-      title: string
+      meeting_name: string
+      kind: string
+      owner_id: number
       created_at: string
-      user_id: number
-      duration: number
+      is_shared: boolean
+      description: string | null
+      view_count: number
+      duration?: number
       // 其它字段按需补充
     }
 

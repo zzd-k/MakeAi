@@ -45,20 +45,20 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchGetUserList } from '@/api/system-manage'
+  import { fetchAdminUsers, fetchAdminUserDetail, updateAdminUserStatus } from '@/api/admin'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
-  import { ElTag, ElMessageBox, ElImage } from 'element-plus'
+  import { ElTag, ElMessageBox, ElImage, ElMessage } from 'element-plus'
   import { DialogType } from '@/types'
 
   defineOptions({ name: 'User' })
 
-  type UserListItem = Api.SystemManage.UserListItem
+  type UserListItem = Api.Admin.User
 
   // 弹窗相关
   const dialogType = ref<DialogType>('add')
   const dialogVisible = ref(false)
-  const currentUserData = ref<Partial<UserListItem>>({})
+  const currentUserData = ref<Partial<UserListItem> | Record<string, any>>({})
 
   // 选中行
   const selectedRows = ref<UserListItem[]>([])
@@ -69,27 +69,37 @@
     userGender: undefined,
     userPhone: undefined,
     userEmail: undefined,
-    status: '1'
+    status: undefined
   })
 
   // 用户状态配置
   const USER_STATUS_CONFIG = {
-    '1': { type: 'success' as const, text: '在线' },
-    '2': { type: 'info' as const, text: '离线' },
-    '3': { type: 'warning' as const, text: '异常' },
-    '4': { type: 'danger' as const, text: '注销' }
+    true: { type: 'success' as const, text: '激活' },
+    false: { type: 'danger' as const, text: '禁用' }
   } as const
 
   /**
    * 获取用户状态配置
    */
-  const getUserStatusConfig = (status: string) => {
-    return (
-      USER_STATUS_CONFIG[status as keyof typeof USER_STATUS_CONFIG] || {
-        type: 'info' as const,
-        text: '未知'
-      }
-    )
+  const getUserStatusConfig = (isActive: boolean) => {
+    return USER_STATUS_CONFIG[isActive ? 'true' : 'false']
+  }
+
+  // 格式化时间
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return '-'
+    try {
+      const date = new Date(timeStr)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    } catch {
+      return timeStr
+    }
   }
 
   const {
@@ -107,75 +117,99 @@
   } = useTable({
     // 核心配置
     core: {
-      apiFn: fetchGetUserList,
+      apiFn: fetchAdminUsers,
       apiParams: {
-        current: 1,
-        size: 20,
-        ...searchForm.value
+        page: 1,
+        page_size: 20
       },
-      // 自定义分页字段映射，未设置时将使用全局配置 tableConfig.ts 中的 paginationKey
-      // paginationKey: {
-      //   current: 'pageNum',
-      //   size: 'pageSize'
-      // },
+      // 自定义分页字段映射
+      paginationKey: {
+        current: 'page',
+        size: 'page_size'
+      },
       columnsFactory: () => [
         { type: 'selection' }, // 勾选列
         { type: 'index', width: 60, label: '序号' }, // 序号
         {
+          prop: 'id',
+          label: 'ID',
+          width: 80,
+          formatter: (row: UserListItem) => row.id
+        },
+        {
           prop: 'userInfo',
-          label: '用户名',
+          label: '用户信息',
           width: 280,
-          // visible: false, // 默认是否显示列
-          formatter: (row) => {
+          formatter: (row: UserListItem) => {
             return h('div', { class: 'user flex-c' }, [
               h(ElImage, {
                 class: 'size-9.5 rounded-md',
-                src: row.avatar,
-                previewSrcList: [row.avatar],
-                // 图片预览是否插入至 body 元素上，用于解决表格内部图片预览样式异常
+                src: row.avatar || ACCOUNT_TABLE_DATA[0].avatar,
+                previewSrcList: [row.avatar || ACCOUNT_TABLE_DATA[0].avatar],
                 previewTeleported: true
               }),
               h('div', { class: 'ml-2' }, [
-                h('p', { class: 'user-name' }, row.userName),
-                h('p', { class: 'email' }, row.userEmail)
+                h('p', { class: 'user-name' }, row.username),
+                h('p', { class: 'email' }, row.email || '未设置邮箱')
               ])
             ])
           }
         },
         {
-          prop: 'userGender',
-          label: '性别',
-          sortable: true,
-          formatter: (row) => row.userGender
+          prop: 'nickname',
+          label: '昵称',
+          formatter: (row: UserListItem) => row.nickname || '-'
         },
-        { prop: 'userPhone', label: '手机号' },
         {
-          prop: 'status',
+          prop: 'is_superuser',
+          label: '超级管理员',
+          width: 120,
+          formatter: (row: UserListItem) => {
+            return h(ElTag, { type: row.is_superuser ? 'danger' : 'info' }, () =>
+              row.is_superuser ? '是' : '否'
+            )
+          }
+        },
+        {
+          prop: 'is_staff',
+          label: '管理员',
+          width: 100,
+          formatter: (row: UserListItem) => {
+            return h(ElTag, { type: row.is_staff ? 'warning' : 'info' }, () =>
+              row.is_staff ? '是' : '否'
+            )
+          }
+        },
+        {
+          prop: 'is_active',
           label: '状态',
-          formatter: (row) => {
-            const statusConfig = getUserStatusConfig(row.status)
+          width: 100,
+          formatter: (row: UserListItem) => {
+            const statusConfig = getUserStatusConfig(row.is_active)
             return h(ElTag, { type: statusConfig.type }, () => statusConfig.text)
           }
         },
         {
-          prop: 'createTime',
-          label: '创建日期',
-          sortable: true
+          prop: 'created_at',
+          label: '创建时间',
+          width: 160,
+          sortable: true,
+          formatter: (row: UserListItem) => formatTime(row.created_at)
         },
         {
           prop: 'operation',
           label: '操作',
-          width: 120,
-          fixed: 'right', // 固定列
-          formatter: (row) =>
-            h('div', [
+          width: 180,
+          fixed: 'right',
+          formatter: (row: UserListItem) =>
+            h('div', { class: 'flex gap-2' }, [
               h(ArtButtonTable, {
-                type: 'edit',
-                onClick: () => showDialog('edit', row)
+                type: 'view',
+                onClick: () => viewUserDetail(row)
               }),
               h(ArtButtonTable, {
-                type: 'delete',
-                onClick: () => deleteUser(row)
+                type: 'edit',
+                onClick: () => toggleUserStatus(row)
               })
             ])
         }
@@ -183,24 +217,75 @@
     },
     // 数据处理
     transform: {
-      // 数据转换器 - 替换头像
       dataTransformer: (records) => {
-        // 类型守卫检查
         if (!Array.isArray(records)) {
           console.warn('数据转换器: 期望数组类型，实际收到:', typeof records)
           return []
         }
-
-        // 使用本地头像替换接口返回的头像
-        return records.map((item, index: number) => {
-          return {
-            ...item,
-            avatar: ACCOUNT_TABLE_DATA[index % ACCOUNT_TABLE_DATA.length].avatar
-          }
-        })
+        return records
       }
     }
   })
+
+  /**
+   * 查看用户详情
+   */
+  const viewUserDetail = async (row: UserListItem) => {
+    try {
+      const detail = await fetchAdminUserDetail(row.id)
+      ElMessageBox.alert(
+        `
+          <div style="text-align: left; line-height: 1.8;">
+            <p><strong>用户ID:</strong> ${detail.id}</p>
+            <p><strong>用户名:</strong> ${detail.username}</p>
+            <p><strong>昵称:</strong> ${detail.nickname || '未设置'}</p>
+            <p><strong>邮箱:</strong> ${detail.email || '未设置'}</p>
+            <p><strong>超级管理员:</strong> ${detail.is_superuser ? '是' : '否'}</p>
+            <p><strong>管理员:</strong> ${detail.is_staff ? '是' : '否'}</p>
+            <p><strong>账户状态:</strong> ${detail.is_active ? '激活' : '禁用'}</p>
+            <p><strong>创建时间:</strong> ${formatTime(detail.created_at)}</p>
+          </div>
+        `,
+        '用户详情',
+        {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: '关闭'
+        }
+      )
+    } catch (error: any) {
+      console.error('获取用户详情失败:', error)
+      ElMessage.error('获取用户详情失败')
+    }
+  }
+
+  /**
+   * 切换用户状态
+   */
+  const toggleUserStatus = async (row: UserListItem) => {
+    const newStatus = !row.is_active
+    const actionText = newStatus ? '激活' : '禁用'
+
+    try {
+      await ElMessageBox.confirm(
+        `确定要${actionText}用户 "${row.username}" 吗？`,
+        `${actionText}用户`,
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+
+      await updateAdminUserStatus(row.id, { is_active: newStatus })
+      ElMessage.success(`${actionText}成功`)
+      refreshData()
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('更新用户状态失败:', error)
+        ElMessage.error(`${actionText}失败`)
+      }
+    }
+  }
 
   /**
    * 搜索处理
@@ -226,26 +311,13 @@
   }
 
   /**
-   * 删除用户
-   */
-  const deleteUser = (row: UserListItem): void => {
-    console.log('删除用户:', row)
-    ElMessageBox.confirm(`确定要注销该用户吗？`, '注销用户', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'error'
-    }).then(() => {
-      ElMessage.success('注销成功')
-    })
-  }
-
-  /**
    * 处理弹窗提交事件
    */
   const handleDialogSubmit = async () => {
     try {
       dialogVisible.value = false
       currentUserData.value = {}
+      refreshData()
     } catch (error) {
       console.error('提交失败:', error)
     }

@@ -43,17 +43,18 @@ const componentMap: Record<string, () => Promise<any>> = {
   '/announcement': () => import('@views/announcement/index.vue'),
 
   // 对话管理
-  // '/conversation': () => import('@views/conversation/index.vue'),
-  '/conversation/records': () => import('@views/conversation/record/index.vue'),
+  '/conversation/record': () => import('@views/conversation/record/index.vue'),
+  '/conversation/like': () => import('@views/conversation/like/index.vue'),
+  '/conversation/comment': () => import('@views/conversation/comment/index.vue'),
 
   // 会话类型
   '/session-type': () => import('@views/session-type/index.vue'),
 
   // 系统设置
-  // '/settings': () => import('@views/settings/index.vue'),
   '/settings/basic': () => import('@views/settings/basic/index.vue'),
   '/settings/app-menu': () => import('@views/settings/app-menu/index.vue'),
-  '/settings/agreement': () => import('@views/settings/user-agreement/index.vue')
+  '/settings/app-order': () => import('@views/settings/app-order/index.vue'),
+  '/settings/user-agreement': () => import('@views/settings/user-agreement/index.vue')
 }
 
 /**

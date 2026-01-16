@@ -56,7 +56,9 @@
 </template>
 
 <script setup lang="ts">
+  import { reactive } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { ElMessage } from 'element-plus'
 
   defineOptions({ name: 'BasicSetting' })
 

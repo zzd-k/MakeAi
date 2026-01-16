@@ -33,9 +33,11 @@
 </template>
 
 <script setup lang="ts">
+  import { ref, shallowRef, onBeforeUnmount } from 'vue'
   import '@wangeditor/editor/dist/css/style.css'
   import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
   import { useI18n } from 'vue-i18n'
+  import { ElMessage } from 'element-plus'
   import type { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 
   defineOptions({ name: 'UserAgreementSetting' })

@@ -246,13 +246,103 @@
       :dialog-title="editMode === 'create' ? '新增名片' : '卡片详情'"
       @save="handleSaveCard"
     />
+
+    <!-- 会话统计弹窗 -->
+    <ElDialog v-model="sessionStatsVisible" title="会话统计" width="80%">
+      <div class="mb-4">
+        <span class="text-g-600">用户：</span>
+        <span class="font-medium">{{ currentUser?.nickname }}</span>
+      </div>
+      <ArtTable
+        :data="sessionList"
+        style="width: 100%"
+        :border="true"
+        :stripe="true"
+        v-loading="sessionLoading"
+      >
+        <template #default>
+          <ElTableColumn label="ID" prop="id" width="80" align="center" />
+          <ElTableColumn label="会话标题" prop="meeting_name" min-width="200" />
+          <ElTableColumn label="类型" prop="kind" width="120" align="center" />
+          <ElTableColumn label="时长" prop="duration" width="100" align="center">
+            <template #default="scope">
+              <span v-if="scope.row.duration">{{ Math.floor(scope.row.duration / 60) }}分钟</span>
+              <span v-else>-</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="创建时间" prop="created_at" width="180" align="center">
+            <template #default="scope">
+              {{ new Date(scope.row.created_at).toLocaleString('zh-CN') }}
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="描述" prop="description" min-width="200">
+            <template #default="scope">
+              <span class="text-g-600">{{ scope.row.description || '-' }}</span>
+            </template>
+          </ElTableColumn>
+        </template>
+      </ArtTable>
+      <div class="flex justify-end mt-4">
+        <ElPagination
+          small
+          background
+          layout="prev, pager, next, total"
+          :total="sessionTotal"
+          :page-size="10"
+          v-model:current-page="sessionPage"
+          @current-change="fetchSessionStats"
+        />
+      </div>
+    </ElDialog>
+
+    <!-- 分享记录弹窗 -->
+    <ElDialog v-model="shareReadVisible" title="分享中的会话" width="80%">
+      <div class="mb-4">
+        <span class="text-g-600">用户：</span>
+        <span class="font-medium">{{ currentUser?.nickname }}</span>
+      </div>
+      <ArtTable
+        :data="sharedList"
+        style="width: 100%"
+        :border="true"
+        :stripe="true"
+        v-loading="shareLoading"
+      >
+        <template #default>
+          <ElTableColumn label="ID" prop="id" width="80" align="center" />
+          <ElTableColumn label="会话标题" prop="meeting_name" min-width="200" />
+          <ElTableColumn label="浏览量" prop="view_count" width="100" align="center" />
+          <ElTableColumn label="分享时间" prop="created_at" width="180" align="center">
+            <template #default="scope">
+              {{ new Date(scope.row.created_at).toLocaleString('zh-CN') }}
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="描述" prop="description" min-width="200">
+            <template #default="scope">
+              <span class="text-g-600">{{ scope.row.description || '-' }}</span>
+            </template>
+          </ElTableColumn>
+        </template>
+      </ArtTable>
+      <div class="flex justify-end mt-4">
+        <ElPagination
+          small
+          background
+          layout="prev, pager, next, total"
+          :total="shareTotal"
+          :page-size="10"
+          v-model:current-page="sharePage"
+          @current-change="fetchShareRead"
+        />
+      </div>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
   import avatar1 from '@/assets/images/avatar/avatar1.webp'
   import CardDetailForm from './CardDetailForm.vue'
-  import { fetchAdminUsers } from '@/api/admin'
+  import { fetchAdminUsers, fetchAdminRecords } from '@/api/admin'
   import { ElMessage } from 'element-plus'
 
   defineOptions({ name: 'MemberCenter' })
@@ -396,15 +486,77 @@
   /**
    * 会话统计
    */
-  const handleSessionStats = (row: MemberItem) => {
-    console.log('会话统计', row)
+  const sessionStatsVisible = ref(false)
+  const sessionLoading = ref(false)
+  const sessionList = ref<any[]>([])
+  const sessionTotal = ref(0)
+  const sessionPage = ref(1)
+  const currentUser = ref<MemberItem | null>(null)
+
+  const handleSessionStats = async (row: MemberItem) => {
+    currentUser.value = row
+    sessionStatsVisible.value = true
+    sessionPage.value = 1
+    await fetchSessionStats()
+  }
+
+  const fetchSessionStats = async () => {
+    if (!currentUser.value) return
+
+    try {
+      sessionLoading.value = true
+      const response = await fetchAdminRecords({
+        page: sessionPage.value,
+        page_size: 10
+      })
+
+      sessionList.value = response.items
+      sessionTotal.value = response.total
+    } catch (error) {
+      console.error('获取会话统计失败:', error)
+      ElMessage.error('获取会话统计失败')
+    } finally {
+      sessionLoading.value = false
+    }
   }
 
   /**
    * 分享/阅读
    */
-  const handleShareRead = (row: MemberItem) => {
-    console.log('分享/阅读', row)
+  const shareReadVisible = ref(false)
+  const shareReadTab = ref('shared')
+  const shareLoading = ref(false)
+  const sharedList = ref<any[]>([])
+  const shareTotal = ref(0)
+  const sharePage = ref(1)
+
+  const handleShareRead = async (row: MemberItem) => {
+    currentUser.value = row
+    shareReadVisible.value = true
+    sharePage.value = 1
+    await fetchShareRead()
+  }
+
+  const fetchShareRead = async () => {
+    if (!currentUser.value) return
+
+    try {
+      shareLoading.value = true
+      // 获取分享中的会话（is_shared=true的记录）
+      const response = await fetchAdminRecords({
+        page: sharePage.value,
+        page_size: 10
+      })
+
+      // 过滤出分享中的会话
+      sharedList.value = response.items.filter((item: any) => item.is_shared)
+      shareTotal.value = sharedList.value.length
+    } catch (error) {
+      console.error('获取分享记录失败:', error)
+      ElMessage.error('获取分享记录失败')
+    } finally {
+      shareLoading.value = false
+    }
   }
 
   /**

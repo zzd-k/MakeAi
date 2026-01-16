@@ -126,7 +126,7 @@
             align="center"
           >
             <template #default="scope">
-              <span class="font-semibold text-primary">{{ scope.row.views }}</span>
+              <span class="font-semibold text-primary">{{ scope.row.views || 0 }}</span>
             </template>
           </ElTableColumn>
           <ElTableColumn
@@ -137,10 +137,22 @@
           >
             <template #default="scope">
               <div class="flex items-center justify-center gap-2">
-                <ElButton type="info" size="small" plain @click="handleStats(scope.row)">
+                <ElButton
+                  v-if="scope.row.isShared"
+                  type="info"
+                  size="small"
+                  plain
+                  @click="handleStats(scope.row)"
+                >
                   {{ $t('pages.conversationRecord.conversationDetail') }}
                 </ElButton>
-                <ElButton type="primary" size="small" plain @click="handleTimeline(scope.row)">
+                <ElButton
+                  v-if="scope.row.isShared"
+                  type="primary"
+                  size="small"
+                  plain
+                  @click="handleComments(scope.row)"
+                >
                   {{ $t('pages.conversationRecord.commentRecord') }}
                 </ElButton>
                 <ElButton type="success" size="small" link @click="handleEdit(scope.row)">
@@ -198,13 +210,45 @@
         </div>
       </div>
     </div>
+
+    <!-- 评论记录弹窗 -->
+    <ElDialog v-model="commentsVisible" title="评论记录" width="70%" :destroy-on-close="true">
+      <div class="mb-4">
+        <span class="text-g-600">会话：</span>
+        <span class="font-medium">{{ currentConversation?.title }}</span>
+      </div>
+      <div v-if="commentsLoading" class="text-center py-10">
+        <ElIcon class="is-loading"><Loading /></ElIcon>
+        <p class="mt-2 text-g-500">加载中...</p>
+      </div>
+      <div v-else-if="commentsList.length === 0" class="text-center text-g-500 py-10">
+        暂无评论
+      </div>
+      <ArtTable v-else :data="commentsList" style="width: 100%" :border="true" :stripe="true">
+        <template #default>
+          <ElTableColumn label="ID" prop="id" width="80" align="center" />
+          <ElTableColumn label="用户" prop="user" width="150" />
+          <ElTableColumn label="评论内容" prop="content" min-width="300" />
+          <ElTableColumn label="评论时间" prop="created_at" width="180" align="center">
+            <template #default="scope">
+              {{
+                scope.row.created_at ? new Date(scope.row.created_at).toLocaleString('zh-CN') : '-'
+              }}
+            </template>
+          </ElTableColumn>
+        </template>
+      </ArtTable>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
+  import { ref, reactive, computed, watch, onMounted } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { fetchAdminRecords, deleteAdminRecord } from '@/api/admin'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { fetchComments } from '@/api/social'
+  import { ElMessage, ElMessageBox, ElIcon } from 'element-plus'
+  import { Loading } from '@element-plus/icons-vue'
 
   defineOptions({ name: 'ConversationRecord' })
 
@@ -219,6 +263,7 @@
     shareDesc: string
     createTime: string
     views: number
+    shareId?: string | null
   }
 
   const searchForm = reactive({
@@ -276,7 +321,8 @@
         isShared: item.is_shared || false,
         shareDesc: item.description || item.share_desc || '暂无描述',
         createTime: formatTime(item.created_at),
-        views: item.view_count || 0
+        views: item.view_count || 0,
+        shareId: item.share_id || null
       }))
 
       total.value = res.total
@@ -313,26 +359,41 @@
 
   // 查看会话详情
   const handleStats = async (row: ConversationItem) => {
-    // 直接使用列表数据显示详情，避免调用可能出错的详情接口
-    ElMessageBox.alert(
-      `
-        <div style="text-align: left; line-height: 1.8;">
-          <p><strong>会话ID:</strong> ${row.id}</p>
-          <p><strong>会话标题:</strong> ${row.title}</p>
-          <p><strong>会话类型:</strong> ${row.type}</p>
-          <p><strong>创建者:</strong> ${row.creator}</p>
-          <p><strong>创建时间:</strong> ${row.createTime}</p>
-          <p><strong>是否分享:</strong> ${row.isShared ? '是' : '否'}</p>
-          <p><strong>分享描述:</strong> ${row.shareDesc}</p>
-          <p><strong>浏览次数:</strong> ${row.views}</p>
-        </div>
-      `,
-      '会话详情',
-      {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: '关闭'
+    try {
+      if (!row.id) {
+        ElMessage.warning('会话ID无效')
+        return
       }
-    )
+
+      console.log('点击会话详情，会话ID:', row.id, '分享ID:', row.shareId)
+
+      // 如果有 share_id，直接构建后端H5分享页URL
+      if (row.shareId) {
+        const apiUrl = import.meta.env.VITE_API_URL || ''
+
+        let backendUrl = ''
+        if (apiUrl.startsWith('http')) {
+          // 如果是完整URL，直接使用
+          backendUrl = apiUrl
+        } else {
+          backendUrl = 'https://www.finecv.cn' // 默认后端地址，请根据实际情况修改
+        }
+
+        // 移除末尾的 /api 等路径
+        backendUrl = backendUrl.replace(/\/api\/?$/, '')
+
+        const h5Url = `${backendUrl}/share/h5/${row.shareId}`
+        console.log('打开H5分享页:', h5Url)
+        window.open(h5Url, '_blank')
+        return
+      }
+
+      // 如果没有 share_id，提示用户
+      ElMessage.warning('该会话暂未生成分享链接，请先生成分享链接')
+    } catch (error: any) {
+      console.error('打开分享页失败:', error)
+      ElMessage.error('打开分享页失败')
+    }
   }
 
   // 跳转到评论记录页面
@@ -340,6 +401,42 @@
     // 使用 Vue Router 跳转到评论记录页面
     window.location.hash = '#/conversation/comment'
     ElMessage.success(`跳转到评论记录页面`)
+  }
+
+  // 查看评论记录（弹窗显示）
+  const commentsVisible = ref(false)
+  const commentsLoading = ref(false)
+  const commentsList = ref<any[]>([])
+  const currentConversation = ref<ConversationItem | null>(null)
+
+  const handleComments = async (row: ConversationItem) => {
+    currentConversation.value = row
+    commentsVisible.value = true
+    commentsLoading.value = true
+
+    try {
+      // 调用获取评论列表的API
+      const response = await fetchComments(row.id, {
+        page: 1,
+        page_size: 100 // 获取所有评论
+      })
+
+      // 转换数据格式
+      commentsList.value = response.items.map((item: any) => ({
+        id: item.id,
+        user: item.user_id ? `USER-${item.user_id}` : '未知用户',
+        content: item.content,
+        created_at: item.created_at
+      }))
+
+      console.log('评论列表:', commentsList.value)
+    } catch (error) {
+      console.error('获取评论失败:', error)
+      ElMessage.error('获取评论失败')
+      commentsList.value = []
+    } finally {
+      commentsLoading.value = false
+    }
   }
 
   const handleEdit = async (row: ConversationItem) => {

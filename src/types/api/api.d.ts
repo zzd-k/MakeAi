@@ -132,4 +132,23 @@ declare namespace Api {
         Api.Common.CommonSearchParams
     >
   }
+
+  /** AI分析类型 */
+  namespace Analysis {
+    /** 分析任务响应 */
+    interface TaskResponse {
+      task_id: string
+      status: string
+      message?: string
+    }
+
+    /** 分析结果响应 */
+    interface ResultResponse {
+      status: 'pending' | 'processing' | 'completed' | 'failed'
+      transcript?: string
+      audio_url?: string
+      summary?: string
+      error?: string
+    }
+  }
 }

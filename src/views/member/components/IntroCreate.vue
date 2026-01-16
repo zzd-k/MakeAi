@@ -130,8 +130,8 @@
 
         // 1. 创建会议记录
         const meeting = await createMeeting({
-          meeting_name: 'AI自我介绍',
-          kind: 'introduction'
+          title: 'AI自我介绍',
+          description: 'AI自我介绍'
         })
 
         // 2. 上传音频文件

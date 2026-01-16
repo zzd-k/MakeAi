@@ -24,7 +24,13 @@
 
     <!-- 数据表格 -->
     <div class="art-card p-5">
-      <ArtTable :data="displayData" style="width: 100%" :border="true" :stripe="true">
+      <ArtTable
+        :data="displayData"
+        style="width: 100%"
+        :border="true"
+        :stripe="true"
+        v-loading="loading"
+      >
         <template #default>
           <ElTableColumn label="序号" type="index" width="80" align="center" />
           <ElTableColumn label="会员号" prop="memberId" width="100" align="center">
@@ -246,6 +252,8 @@
 <script setup lang="ts">
   import avatar1 from '@/assets/images/avatar/avatar1.webp'
   import CardDetailForm from './CardDetailForm.vue'
+  import { fetchAdminUsers } from '@/api/admin'
+  import { ElMessage } from 'element-plus'
 
   defineOptions({ name: 'MemberCenter' })
 
@@ -272,37 +280,51 @@
   const pageSize = ref(10)
   const currentPage = ref(1)
   const jumpPage = ref('')
+  const loading = ref(false)
 
-  const tableData = reactive<MemberItem[]>([
-    {
-      memberId: '12551',
-      nickname: '12班',
-      avatar: avatar1,
-      phone: '8528291822',
-      email: '-',
-      position: '产品经理',
-      sessionCount: 121,
-      likes: 21,
-      shares: 21,
-      comments: 12,
-      registerTime: '2025-9-2',
-      remark: '-'
-    }
-  ])
-
-  /**
-   * 总数据量
-   */
-  const total = computed(() => tableData.length)
+  const tableData = ref<MemberItem[]>([])
+  const total = ref(0)
 
   /**
    * 当前页显示的数据
    */
-  const displayData = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value
-    const end = start + pageSize.value
-    return tableData.slice(start, end)
-  })
+  const displayData = computed(() => tableData.value)
+
+  /**
+   * 获取用户列表
+   */
+  const fetchUserList = async () => {
+    try {
+      loading.value = true
+      const response = await fetchAdminUsers({
+        page: currentPage.value,
+        page_size: pageSize.value
+      })
+
+      // 将API数据转换为表格数据格式
+      tableData.value = response.items.map((user) => ({
+        memberId: String(user.id),
+        nickname: user.nickname || user.username,
+        avatar: user.avatar || avatar1,
+        phone: '-', // API暂无此字段
+        email: user.email || '-',
+        position: '-', // API暂无此字段
+        sessionCount: 0, // API暂无此字段
+        likes: 0, // API暂无此字段
+        shares: 0, // API暂无此字段
+        comments: 0, // API暂无此字段
+        registerTime: new Date(user.created_at).toLocaleDateString('zh-CN'),
+        remark: '-'
+      }))
+
+      total.value = response.total
+    } catch (error) {
+      console.error('获取用户列表失败:', error)
+      ElMessage.error('获取用户列表失败')
+    } finally {
+      loading.value = false
+    }
+  }
 
   /**
    * 搜索
@@ -310,6 +332,7 @@
   const handleSearch = () => {
     console.log('搜索', searchForm)
     currentPage.value = 1
+    fetchUserList()
   }
 
   /**
@@ -319,7 +342,22 @@
     searchForm.memberId = ''
     searchForm.nickname = ''
     currentPage.value = 1
+    fetchUserList()
   }
+
+  /**
+   * 监听页码变化
+   */
+  watch(currentPage, () => {
+    fetchUserList()
+  })
+
+  /**
+   * 初始化加载数据
+   */
+  onMounted(() => {
+    fetchUserList()
+  })
 
   /**
    * 新增
@@ -408,6 +446,7 @@
    */
   const handlePageSizeChange = () => {
     currentPage.value = 1
+    fetchUserList()
   }
 
   /**

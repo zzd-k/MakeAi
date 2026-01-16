@@ -60,6 +60,14 @@ export const useUserStore = defineStore(
     const lockPassword = ref('')
     // 用户信息
     const info = ref<Partial<Api.Auth.UserInfo>>({})
+    // 角色信息
+    const roleInfo = ref<{
+      role_id?: number | null
+      role_name?: string | null
+      role_code?: string | null
+    }>({})
+    // 权限列表(菜单权限代码)
+    const permissions = ref<string[]>([])
     // 搜索历史记录
     const searchHistory = ref<AppRouteRecord[]>([])
     // 访问令牌
@@ -136,6 +144,26 @@ export const useUserStore = defineStore(
     }
 
     /**
+     * 设置角色信息
+     * @param role 角色信息
+     */
+    const setRoleInfo = (role: {
+      role_id?: number | null
+      role_name?: string | null
+      role_code?: string | null
+    }) => {
+      roleInfo.value = role
+    }
+
+    /**
+     * 设置权限列表
+     * @param perms 权限代码数组
+     */
+    const setPermissions = (perms: string[]) => {
+      permissions.value = perms
+    }
+
+    /**
      * 退出登录
      * 清空所有用户相关状态并跳转到登录页
      * 如果是同一账号重新登录，保留工作台标签页
@@ -149,6 +177,10 @@ export const useUserStore = defineStore(
 
       // 清空用户信息
       info.value = {}
+      // 清空角色信息
+      roleInfo.value = {}
+      // 清空权限列表
+      permissions.value = []
       // 重置登录状态
       isLogin.value = false
       // 重置锁屏状态
@@ -209,6 +241,8 @@ export const useUserStore = defineStore(
       isLock,
       lockPassword,
       info,
+      roleInfo,
+      permissions,
       searchHistory,
       accessToken,
       refreshToken,
@@ -222,6 +256,8 @@ export const useUserStore = defineStore(
       setLockStatus,
       setLockPassword,
       setToken,
+      setRoleInfo,
+      setPermissions,
       logOut,
       checkAndClearWorktabs
     }

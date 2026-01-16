@@ -58,12 +58,13 @@
 <script setup lang="ts">
   import { ButtonMoreItem } from '@/components/core/forms/art-button-more/index.vue'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchGetRoleList } from '@/api/system-manage'
+  import { fetchGetRoleList, fetchDeleteRole } from '@/api/system/role'
   import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
   import RoleSearch from './modules/role-search.vue'
   import RoleEditDialog from './modules/role-edit-dialog.vue'
   import RolePermissionDialog from './modules/role-permission-dialog.vue'
-  import { ElTag, ElMessageBox } from 'element-plus'
+  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import { formatDateTime } from '@/utils'
 
   defineOptions({ name: 'Role' })
 
@@ -71,11 +72,8 @@
 
   // 搜索表单
   const searchForm = ref({
-    roleName: undefined,
-    roleCode: undefined,
-    description: undefined,
-    enabled: undefined,
-    daterange: undefined
+    search: undefined,
+    role_status: undefined
   })
 
   const showSearchBar = ref(false)
@@ -96,44 +94,48 @@
     handleSizeChange,
     handleCurrentChange,
     refreshData
-  } = useTable({
+  } = useTable<(params: any) => Promise<Api.Common.PaginatedResponse<RoleListItem>>>({
     // 核心配置
     core: {
       apiFn: fetchGetRoleList,
       apiParams: {
-        current: 1,
         size: 20
+      },
+      paginationKey: {
+        current: 'page',
+        size: 'size'
       },
       // 排除 apiParams 中的属性
       excludeParams: ['daterange'],
       columnsFactory: () => [
         {
-          prop: 'roleId',
+          prop: 'id',
           label: '角色ID',
           width: 100
         },
         {
-          prop: 'roleName',
+          prop: 'role_name',
           label: '角色名称',
           minWidth: 120
         },
         {
-          prop: 'roleCode',
+          prop: 'role_code',
           label: '角色编码',
           minWidth: 120
         },
         {
-          prop: 'description',
+          prop: 'role_description',
           label: '角色描述',
           minWidth: 150,
           showOverflowTooltip: true
         },
         {
-          prop: 'enabled',
+          prop: 'role_status',
           label: '角色状态',
           width: 100,
-          formatter: (row) => {
-            const statusConfig = row.enabled
+
+          formatter: (row: RoleListItem) => {
+            const statusConfig = row.role_status
               ? { type: 'success', text: '启用' }
               : { type: 'warning', text: '禁用' }
             return h(
@@ -144,17 +146,20 @@
           }
         },
         {
-          prop: 'createTime',
+          prop: 'created_at',
           label: '创建日期',
           width: 180,
-          sortable: true
+          sortable: true,
+          formatter: (row: RoleListItem) => {
+            return formatDateTime(row.created_at)
+          }
         },
         {
           prop: 'operation',
           label: '操作',
           width: 80,
           fixed: 'right',
-          formatter: (row) =>
+          formatter: (row: RoleListItem) =>
             h('div', [
               h(ArtButtonMore, {
                 list: [
@@ -183,6 +188,9 @@
     }
   })
 
+  // Mapping standard sort/page params if needed by API
+  // In `useTable`, the apiParams are spread. We ensured `apiFn` matches.
+
   const dialogType = ref<'add' | 'edit'>('add')
 
   const showDialog = (type: 'add' | 'edit', row?: RoleListItem) => {
@@ -196,12 +204,8 @@
    * @param params 搜索参数
    */
   const handleSearch = (params: Record<string, any>) => {
-    // 处理日期区间参数，把 daterange 转换为 startTime 和 endTime
-    const { daterange, ...filtersParams } = params
-    const [startTime, endTime] = Array.isArray(daterange) ? daterange : [null, null]
-
-    // 搜索参数赋值
-    Object.assign(searchParams, { ...filtersParams, startTime, endTime })
+    // 直接使用搜索参数,API 支持 search 和 role_status
+    Object.assign(searchParams, params)
     getData()
   }
 
@@ -225,18 +229,22 @@
   }
 
   const deleteRole = (row: RoleListItem) => {
-    ElMessageBox.confirm(`确定删除角色"${row.roleName}"吗？此操作不可恢复！`, '删除确认', {
+    ElMessageBox.confirm(`确定删除角色"${row.role_name}"吗？此操作不可恢复！`, '删除确认', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-      .then(() => {
-        // TODO: 调用删除接口
+      .then(async () => {
+        await fetchDeleteRole(row.id)
         ElMessage.success('删除成功')
         refreshData()
       })
       .catch(() => {
-        ElMessage.info('已取消删除')
+        // Just cancel
       })
   }
+
+  onMounted(() => {
+    getData()
+  })
 </script>

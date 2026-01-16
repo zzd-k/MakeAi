@@ -7,22 +7,22 @@
     @close="handleClose"
   >
     <ElForm ref="formRef" :model="form" :rules="rules" label-width="120px">
-      <ElFormItem label="角色名称" prop="roleName">
-        <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
+      <ElFormItem label="角色名称" prop="role_name">
+        <ElInput v-model="form.role_name" placeholder="请输入角色名称" />
       </ElFormItem>
-      <ElFormItem label="角色编码" prop="roleCode">
-        <ElInput v-model="form.roleCode" placeholder="请输入角色编码" />
+      <ElFormItem label="角色编码" prop="role_code">
+        <ElInput v-model="form.role_code" placeholder="请输入角色编码" />
       </ElFormItem>
-      <ElFormItem label="描述" prop="description">
+      <ElFormItem label="描述" prop="role_description">
         <ElInput
-          v-model="form.description"
+          v-model="form.role_description"
           type="textarea"
           :rows="3"
           placeholder="请输入角色描述"
         />
       </ElFormItem>
-      <ElFormItem label="启用">
-        <ElSwitch v-model="form.enabled" />
+      <ElFormItem label="状态">
+        <ElSwitch v-model="form.role_status" active-text="启用" inactive-text="禁用" />
       </ElFormItem>
     </ElForm>
     <template #footer>
@@ -34,6 +34,8 @@
 
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
+  import { fetchCreateRole, fetchUpdateRole } from '@/api/system/role'
+  import { ElMessage } from 'element-plus'
 
   type RoleListItem = Api.SystemManage.RoleListItem
 
@@ -70,27 +72,26 @@
    * 表单验证规则
    */
   const rules = reactive<FormRules>({
-    roleName: [
+    role_name: [
       { required: true, message: '请输入角色名称', trigger: 'blur' },
       { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
     ],
-    roleCode: [
+    role_code: [
       { required: true, message: '请输入角色编码', trigger: 'blur' },
       { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
     ],
-    description: [{ required: true, message: '请输入角色描述', trigger: 'blur' }]
+    role_description: [{ required: true, message: '请输入角色描述', trigger: 'blur' }]
   })
 
   /**
    * 表单数据
    */
-  const form = reactive<RoleListItem>({
-    roleId: 0,
-    roleName: '',
-    roleCode: '',
-    description: '',
-    createTime: '',
-    enabled: true
+  const form = reactive<Partial<RoleListItem>>({
+    id: 0,
+    role_name: '',
+    role_code: '',
+    role_description: '',
+    role_status: true
   })
 
   /**
@@ -123,14 +124,17 @@
       Object.assign(form, props.roleData)
     } else {
       Object.assign(form, {
-        roleId: 0,
-        roleName: '',
-        roleCode: '',
-        description: '',
-        createTime: '',
-        enabled: true
+        id: 0,
+        role_name: '',
+        role_code: '',
+        role_description: '',
+        role_status: true
       })
     }
+    // Clear validation after next tick
+    nextTick(() => {
+      formRef.value?.clearValidate()
+    })
   }
 
   /**
@@ -150,13 +154,19 @@
 
     try {
       await formRef.value.validate()
-      // TODO: 调用新增/编辑接口
+
+      if (props.dialogType === 'add') {
+        await fetchCreateRole(form)
+      } else {
+        await fetchUpdateRole(form)
+      }
+
       const message = props.dialogType === 'add' ? '新增成功' : '修改成功'
       ElMessage.success(message)
       emit('success')
       handleClose()
     } catch (error) {
-      console.log('表单验证失败:', error)
+      console.error('Submit failed', error)
     }
   }
 </script>

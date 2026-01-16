@@ -45,7 +45,7 @@
   interface Props {
     visible: boolean
     type: string
-    userData?: Partial<Api.Admin.User> | Record<string, any>
+    userData?: Partial<Api.Admin.User> | Record<string, any> | null
   }
 
   interface Emits {

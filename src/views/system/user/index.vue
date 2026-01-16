@@ -37,6 +37,13 @@
         :user-data="currentUserData"
         @submit="handleDialogSubmit"
       />
+
+      <!-- 角色分配弹窗 -->
+      <UserRoleDialog
+        v-model="roleDialogVisible"
+        :user-data="currentUserData"
+        @success="refreshData"
+      />
     </ElCard>
   </div>
 </template>
@@ -48,6 +55,7 @@
   import { fetchAdminUsers, fetchAdminUserDetail, updateAdminUserStatus } from '@/api/admin'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
+  import UserRoleDialog from './modules/user-role-dialog.vue'
   import { ElTag, ElMessageBox, ElImage, ElMessage } from 'element-plus'
   import { DialogType } from '@/types'
 
@@ -58,7 +66,8 @@
   // 弹窗相关
   const dialogType = ref<DialogType>('add')
   const dialogVisible = ref(false)
-  const currentUserData = ref<Partial<UserListItem> | Record<string, any>>({})
+  const roleDialogVisible = ref(false)
+  const currentUserData = ref<UserListItem | null>(null)
 
   // 选中行
   const selectedRows = ref<UserListItem[]>([])
@@ -210,6 +219,12 @@
               h(ArtButtonTable, {
                 type: 'edit',
                 onClick: () => toggleUserStatus(row)
+              }),
+              h(ArtButtonTable, {
+                type: 'edit',
+                icon: 'ri:admin-line',
+                title: 'role',
+                onClick: () => showRoleDialog(row)
               })
             ])
         }
@@ -304,7 +319,7 @@
   const showDialog = (type: DialogType, row?: UserListItem): void => {
     console.log('打开弹窗:', { type, row })
     dialogType.value = type
-    currentUserData.value = row || {}
+    currentUserData.value = row || null
     nextTick(() => {
       dialogVisible.value = true
     })
@@ -316,11 +331,20 @@
   const handleDialogSubmit = async () => {
     try {
       dialogVisible.value = false
-      currentUserData.value = {}
+      currentUserData.value = null
       refreshData()
     } catch (error) {
       console.error('提交失败:', error)
     }
+  }
+
+  /**
+   * 显示角色分配对话框
+   */
+  const showRoleDialog = (row: UserListItem): void => {
+    console.log('打开角色对话框:', row)
+    currentUserData.value = row
+    roleDialogVisible.value = true
   }
 
   /**

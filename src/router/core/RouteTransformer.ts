@@ -40,12 +40,13 @@ export class RouteTransformer {
     }
 
     // 处理不同类型的路由
+    // 处理不同类型的路由
     if (route.meta.isIframe) {
       this.handleIframeRoute(converted, route, depth)
     } else if (this.isFirstLevelRoute(route, depth)) {
-      this.handleFirstLevelRoute(converted, route, component as string)
+      this.handleFirstLevelRoute(converted, route, component)
     } else {
-      this.handleNormalRoute(converted, component as string)
+      this.handleNormalRoute(converted, component)
     }
 
     // 递归处理子路由
@@ -98,17 +99,24 @@ export class RouteTransformer {
   private handleFirstLevelRoute(
     converted: ConvertedRoute,
     route: AppRouteRecord,
-    component: string | undefined
+    component: string | (() => Promise<any>) | undefined
   ): void {
     converted.component = this.componentLoader.loadLayout()
     converted.path = this.extractFirstSegment(route.path || '')
     converted.name = ''
     route.meta.isFirstLevel = true
 
+    let finalComponent: any = undefined
+    if (typeof component === 'function') {
+      finalComponent = component
+    } else if (typeof component === 'string') {
+      finalComponent = this.componentLoader.load(component)
+    }
+
     converted.children = [
       {
         ...route,
-        component: component ? this.componentLoader.load(component) : undefined
+        component: finalComponent
       } as ConvertedRoute
     ]
   }
@@ -116,8 +124,16 @@ export class RouteTransformer {
   /**
    * 处理普通路由
    */
-  private handleNormalRoute(converted: ConvertedRoute, component: string | undefined): void {
-    if (component) {
+  /**
+   * 处理普通路由
+   */
+  private handleNormalRoute(
+    converted: ConvertedRoute,
+    component: string | (() => Promise<any>) | undefined
+  ): void {
+    if (typeof component === 'function') {
+      converted.component = component
+    } else if (typeof component === 'string') {
       converted.component = this.componentLoader.load(component)
     }
   }

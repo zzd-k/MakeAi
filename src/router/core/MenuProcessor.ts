@@ -10,7 +10,9 @@
 import type { AppRouteRecord } from '@/types/router'
 import { useUserStore } from '@/store/modules/user'
 import { useAppMode } from '@/hooks/core/useAppMode'
-import { fetchGetMenuList } from '@/api/system-manage'
+import { fetchGetMenuList } from '@/api/system-manage' // Keep for compatibility if needed, but we will use fetchUserMenu
+import { fetchUserMenu } from '@/api/user/menu'
+import { transformMenusToRoutes, extractPermissions } from '@/utils/router/menu-transform'
 import { asyncRoutes } from '../routes/asyncRoutes'
 import { RoutesAlias } from '../routesAlias'
 import { formatMenuTitle } from '@/utils'
@@ -21,6 +23,10 @@ export class MenuProcessor {
    */
   async getMenuList(): Promise<AppRouteRecord[]> {
     const { isFrontendMode } = useAppMode()
+    console.log(
+      '[MenuProcessor] Start loading menu. Mode:',
+      isFrontendMode.value ? 'Frontend' : 'Backend'
+    )
 
     let menuList: AppRouteRecord[]
     if (isFrontendMode.value) {
@@ -28,6 +34,8 @@ export class MenuProcessor {
     } else {
       menuList = await this.processBackendMenu()
     }
+
+    console.log('[MenuProcessor] Loaded menu list:', menuList)
 
     // 在规范化路径之前，验证原始路径配置
     this.validateMenuPaths(menuList)
@@ -57,8 +65,38 @@ export class MenuProcessor {
    * 处理后端控制模式的菜单
    */
   private async processBackendMenu(): Promise<AppRouteRecord[]> {
-    const list = await fetchGetMenuList()
-    return this.filterEmptyMenus(list)
+    try {
+      // 1. 获取用户菜单和权限
+      const res = await fetchUserMenu()
+
+      // 2. 更新用户 Store 中的角色和权限信息
+      const userStore = useUserStore()
+      if (res) {
+        // 设置角色信息
+        userStore.setRoleInfo({
+          role_id: res.role_id,
+          role_name: res.role_name,
+          role_code: res.role_code
+        })
+
+        // 提取并设置权限列表
+        if (res.menus) {
+          const permissions = extractPermissions(res.menus)
+          userStore.setPermissions(permissions)
+        }
+      }
+
+      // 3. 转换菜单数据为路由配置
+      if (res && res.menus && Array.isArray(res.menus)) {
+        const routes = transformMenusToRoutes(res.menus)
+        return this.filterEmptyMenus(routes)
+      }
+
+      return []
+    } catch (error) {
+      console.error('获取用户菜单失败:', error)
+      return []
+    }
   }
 
   /**

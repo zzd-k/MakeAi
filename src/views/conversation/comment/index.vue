@@ -251,7 +251,7 @@
     ElMessage.info('导出功能开发中')
   }
 
-  const handleEdit = () => {
+  const handleEdit = async (row: CommentItem) => {
     ElMessage.info('编辑功能开发中')
   }
 

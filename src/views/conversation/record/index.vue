@@ -336,13 +336,13 @@
   }
 
   // 跳转到评论记录页面
-  const handleTimeline = () => {
+  const handleTimeline = async (row: ConversationItem) => {
     // 使用 Vue Router 跳转到评论记录页面
     window.location.hash = '#/conversation/comment'
     ElMessage.success(`跳转到评论记录页面`)
   }
 
-  const handleEdit = () => {
+  const handleEdit = async (row: ConversationItem) => {
     ElMessage.info('编辑功能开发中')
   }
 

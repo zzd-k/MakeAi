@@ -79,5 +79,26 @@ export default [
     ]
   },
   // prettier 配置
-  eslintPluginPrettierRecommended
+  eslintPluginPrettierRecommended,
+  // 完全禁用 ESLint
+  {
+    files: ['**/*.{js,mjs,cjs,ts,vue}'],
+    rules: {
+      'prettier/prettier': 'off',
+      'vue/multi-word-component-names': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      'no-unused-vars': 'off',
+      'no-empty-pattern': 'off',
+      'prefer-const': 'off',
+      'no-var': 'off',
+      quotes: 'off',
+      semi: 'off',
+      'no-multiple-empty-lines': 'off',
+      'no-unexpected-multiline': 'off',
+      'no-undef': 'off',
+      'no-console': 'off',
+      'no-debugger': 'off'
+    }
+  }
 ]

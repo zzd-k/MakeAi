@@ -1,7 +1,5 @@
 import request from '@/utils/http'
 
-/** 基础路径已通过 VITE_API_URL 设置为 https://www.finecv.cn */
-
 /** 管理员登录 */
 export function fetchAdminLogin(params: Api.Admin.LoginParams) {
   return request.post<Api.Admin.LoginResponse>({

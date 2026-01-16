@@ -5,13 +5,15 @@
         <span class="text-g-700 text-sm">{{ item.title }}</span>
         <ArtCountTo class="text-[32px] font-bold mt-2" :target="item.value" :duration="1500" />
         <div class="flex-c mt-2">
-          <span class="text-xs text-g-600">据上月数据对比</span>
+          <span class="text-xs text-g-600">{{ item.description }}</span>
           <ArtSvgIcon
+            v-if="item.trend"
             :icon="item.trend === 'up' ? 'ri:arrow-up-line' : 'ri:arrow-down-line'"
             class="ml-1 text-sm"
             :class="[item.trend === 'up' ? 'text-danger' : 'text-success']"
           />
           <span
+            v-if="item.change"
             class="ml-0.5 text-xs font-semibold"
             :class="[item.trend === 'up' ? 'text-danger' : 'text-success']"
           >
@@ -24,11 +26,15 @@
 </template>
 
 <script setup lang="ts">
+  import { fetchStatisticsOverview } from '@/api/admin'
+  import { ElMessage } from 'element-plus'
+
   interface DataCardItem {
     title: string
     value: number
-    change: string
-    trend: 'up' | 'down'
+    change?: string
+    trend?: 'up' | 'down'
+    description: string
   }
 
   /**
@@ -36,28 +42,65 @@
    */
   const dataList = reactive<DataCardItem[]>([
     {
-      title: '会员数量',
-      value: 1451,
+      title: '会员总数',
+      value: 0,
       change: '20%',
-      trend: 'up'
+      trend: 'up',
+      description: '今日新增: 0'
     },
     {
-      title: '社區會話',
-      value: 121,
+      title: '会话总数',
+      value: 0,
       change: '20%',
-      trend: 'up'
+      trend: 'up',
+      description: '已分享: 0'
     },
     {
-      title: '會話',
-      value: 13122,
+      title: '点赞数',
+      value: 0,
       change: '20%',
-      trend: 'up'
+      trend: 'up',
+      description: '评论: 0 | 转发: 0'
     },
     {
-      title: '創建中會話',
-      value: 21,
-      change: '暂时列隊還沒完成創建的會話數量',
-      trend: 'up'
+      title: '活跃用户',
+      value: 0,
+      description: '超级管理员: 0'
     }
   ])
+
+  // 获取统计数据
+  const fetchStatistics = async () => {
+    try {
+      const data = await fetchStatisticsOverview()
+      console.log('统计概览数据:', data)
+
+      // 更新数据卡片 - 根据实际返回的嵌套结构
+      if (data) {
+        dataList[0].value = data.users.total
+        dataList[1].value = data.records.total
+        dataList[2].value = data.interactions.likes
+        dataList[3].value = data.users.active
+
+        // 更新描述
+        dataList[0].description = `今日新增: ${data.users.today_new}`
+        dataList[1].description = `已分享: ${data.records.shared}`
+        dataList[2].description = `评论: ${data.interactions.comments} | 转发: ${data.interactions.forwards}`
+        dataList[3].description = `超级管理员: ${data.users.superusers}`
+      }
+    } catch (error) {
+      console.error('获取统计数据失败:', error)
+      ElMessage.error('获取统计数据失败')
+    }
+  }
+
+  // 移除未使用的函数
+  // const formatDuration = (seconds: number) => {
+  //   return Math.round(seconds / 3600)
+  // }
+
+  // 页面加载时获取数据
+  onMounted(() => {
+    fetchStatistics()
+  })
 </script>

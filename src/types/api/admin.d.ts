@@ -68,16 +68,28 @@ declare namespace Api {
 
     /** 概览统计 */
     interface OverviewResponse {
-      total_users: number
-      total_records: number
-      total_duration: number
-      // ...按后端实际返回扩展
+      users: {
+        total: number
+        active: number
+        superusers: number
+        today_new: number
+      }
+      records: {
+        total: number
+        shared: number
+        today_new: number
+      }
+      interactions: {
+        likes: number
+        comments: number
+        forwards: number
+      }
     }
 
     /** 趋势折线数据 */
     interface TrendPoint {
       date: string
-      value: number
+      count: number
     }
 
     type UsersTrendResponse = TrendPoint[]

@@ -140,6 +140,9 @@
 </template>
 
 <script setup lang="ts">
+  import { fetchAdminUsers } from '@/api/admin'
+  import { ElMessage } from 'element-plus'
+
   interface UserRankingItem {
     rank: number
     nickname: string
@@ -155,73 +158,64 @@
   const pageSize = ref(10)
   const currentPage = ref(1)
   const jumpPage = ref('')
+  const loading = ref(false)
 
   /**
-   * 用户排行榜数据（模拟更多数据）
+   * 用户排行榜数据
    */
-  const tableData = reactive<UserRankingItem[]>([
-    {
-      rank: 1,
-      nickname: '倪明',
-      userId: 'uwj2212152',
-      points: 2311,
-      verifiedSessions: 211,
-      sharingSessions: 21
-    },
-    {
-      rank: 2,
-      nickname: '焉其',
-      userId: 'fsa2321d',
-      points: 2111,
-      verifiedSessions: 124,
-      sharingSessions: 21
-    },
-    {
-      rank: 3,
-      nickname: 'Caas',
-      userId: 'fas22322',
-      points: 1511,
-      verifiedSessions: 111,
-      sharingSessions: 32
-    },
-    {
-      rank: 4,
-      nickname: 'Ben',
-      userId: 'faafafww',
-      points: 1211,
-      verifiedSessions: 107,
-      sharingSessions: 42
-    },
-    {
-      rank: 5,
-      nickname: 'Joe',
-      userId: '23asdaa',
-      points: 653,
-      verifiedSessions: 78,
-      sharingSessions: 32
-    }
-  ])
+  const tableData = ref<UserRankingItem[]>([])
 
   /**
    * 总数据量
    */
-  const total = computed(() => tableData.length)
+  const total = ref(0)
 
   /**
    * 当前页显示的数据
    */
   const displayData = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value
-    const end = start + pageSize.value
-    return tableData.slice(start, end)
+    return tableData.value
   })
+
+  /**
+   * 获取用户排行榜数据
+   */
+  const fetchRankingData = async () => {
+    try {
+      loading.value = true
+      const res = await fetchAdminUsers({
+        page: currentPage.value,
+        page_size: pageSize.value
+      })
+
+      console.log('用户列表数据:', res)
+
+      // 将用户数据转换为排行榜格式
+      tableData.value = res.items.map((user, index) => ({
+        rank: (currentPage.value - 1) * pageSize.value + index + 1,
+        nickname: user.nickname || user.username || '未设置',
+        userId: `USER-${user.id}`,
+        points: 0, // 后端没有积分字段，暂时设为0
+        verifiedSessions: 0, // 后端没有验证会话数，暂时设为0
+        sharingSessions: 0 // 后端没有分享会话数，暂时设为0
+      }))
+
+      total.value = res.total
+    } catch (error) {
+      console.error('获取用户排行榜失败:', error)
+      ElMessage.error('获取用户排行榜失败')
+    } finally {
+      loading.value = false
+    }
+  }
 
   /**
    * 获取排名样式
    */
-  const getRankClass = (_rank: number) => {
-    // 变量暂未使用，但保留参数以便未来可按排名自定义样式
-    void _rank
+  const getRankClass = (rank: number) => {
+    if (rank === 1) return 'bg-yellow-100 text-yellow-600'
+    if (rank === 2) return 'bg-gray-100 text-gray-600'
+    if (rank === 3) return 'bg-orange-100 text-orange-600'
     return 'bg-g-100 text-g-600'
   }
 
@@ -230,6 +224,7 @@
    */
   const handlePageSizeChange = () => {
     currentPage.value = 1
+    fetchRankingData()
   }
 
   /**
@@ -241,6 +236,21 @@
     if (page && page > 0 && page <= totalPages) {
       currentPage.value = page
       jumpPage.value = ''
+      fetchRankingData()
     }
   }
+
+  /**
+   * 监听当前页变化
+   */
+  watch(currentPage, () => {
+    fetchRankingData()
+  })
+
+  /**
+   * 页面加载时获取数据
+   */
+  onMounted(() => {
+    fetchRankingData()
+  })
 </script>

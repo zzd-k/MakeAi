@@ -37,8 +37,7 @@ export const systemRoutes: AppRouteRecord = {
       meta: {
         title: 'menus.system.userCenter',
         isHide: true,
-        keepAlive: true,
-        isHideTab: true
+        keepAlive: true
       }
     },
     {

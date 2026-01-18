@@ -18,6 +18,7 @@
             @keyup.enter="handleSubmit"
             style="margin-top: 25px"
           >
+            <!-- 隐藏角色选择
             <ElFormItem prop="account">
               <ElSelect v-model="formData.account" @change="setupAccount">
                 <ElOption
@@ -30,6 +31,7 @@
                 </ElOption>
               </ElSelect>
             </ElFormItem>
+            -->
             <ElFormItem prop="username">
               <ElInput
                 class="custom-height"
@@ -189,6 +191,7 @@
   const loading = ref(false)
 
   onMounted(() => {
+    // 默认使用超级管理员账号
     setupAccount('super')
   })
 

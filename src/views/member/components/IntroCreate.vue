@@ -62,6 +62,24 @@
             placeholder="请输入自我介绍内容"
           />
         </ElFormItem>
+        <ElFormItem label="调整语速">
+          <div class="w-full">
+            <ElSlider v-model="form.speed" :min="0.5" :max="2" :step="0.1" :show-tooltip="true" />
+            <div class="text-sm text-gray-500 mt-1">{{ form.speed }}x</div>
+          </div>
+        </ElFormItem>
+        <ElFormItem label="调整语调">
+          <div class="w-full">
+            <ElSlider v-model="form.pitch" :min="-10" :max="10" :step="1" :show-tooltip="true" />
+            <div class="text-sm text-gray-500 mt-1">{{ form.pitch }}</div>
+          </div>
+        </ElFormItem>
+        <ElFormItem>
+          <ElButton size="small" @click="handlePreview">
+            <ArtSvgIcon icon="ri:play-circle-line" class="mr-1" />
+            试读
+          </ElButton>
+        </ElFormItem>
       </template>
     </ElForm>
     <template #footer>
@@ -93,7 +111,9 @@
     lang: 'zh',
     voice: 'male1',
     tone: 'professional',
-    text: ''
+    text: '',
+    speed: 1,
+    pitch: 0
   })
 
   function handleBeforeUpload(file: File) {
@@ -200,5 +220,15 @@
 
   function emitClose() {
     emit('update:visible', false)
+  }
+
+  // 试读功能
+  function handlePreview() {
+    if (!form.text.trim()) {
+      ElMessage.warning('请先输入介绍内容')
+      return
+    }
+    ElMessage.info('试读功能开发中...')
+    // TODO: 调用TTS接口预览音频
   }
 </script>

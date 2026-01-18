@@ -266,8 +266,10 @@
           <ElTableColumn label="类型" prop="kind" width="120" align="center" />
           <ElTableColumn label="时长" prop="duration" width="100" align="center">
             <template #default="scope">
-              <span v-if="scope.row.duration">{{ Math.floor(scope.row.duration / 60) }}分钟</span>
-              <span v-else>-</span>
+              <span v-if="scope.row.duration && scope.row.duration > 0">
+                {{ Math.floor(scope.row.duration / 60) }}分{{ scope.row.duration % 60 }}秒
+              </span>
+              <span v-else class="text-g-400">暂无数据</span>
             </template>
           </ElTableColumn>
           <ElTableColumn label="创建时间" prop="created_at" width="180" align="center">
@@ -277,7 +279,10 @@
           </ElTableColumn>
           <ElTableColumn label="描述" prop="description" min-width="200">
             <template #default="scope">
-              <span class="text-g-600">{{ scope.row.description || '-' }}</span>
+              <span v-if="scope.row.description" class="text-g-600">{{
+                scope.row.description
+              }}</span>
+              <span v-else class="text-g-400">暂无描述</span>
             </template>
           </ElTableColumn>
         </template>
@@ -311,7 +316,17 @@
         <template #default>
           <ElTableColumn label="ID" prop="id" width="80" align="center" />
           <ElTableColumn label="会话标题" prop="meeting_name" min-width="200" />
-          <ElTableColumn label="浏览量" prop="view_count" width="100" align="center" />
+          <ElTableColumn label="浏览量" prop="view_count" width="100" align="center">
+            <template #default="scope">
+              <span
+                v-if="scope.row.view_count !== undefined && scope.row.view_count !== null"
+                class="font-medium text-primary"
+              >
+                {{ scope.row.view_count }}
+              </span>
+              <span v-else class="text-g-400">0</span>
+            </template>
+          </ElTableColumn>
           <ElTableColumn label="分享时间" prop="created_at" width="180" align="center">
             <template #default="scope">
               {{ new Date(scope.row.created_at).toLocaleString('zh-CN') }}
@@ -319,7 +334,10 @@
           </ElTableColumn>
           <ElTableColumn label="描述" prop="description" min-width="200">
             <template #default="scope">
-              <span class="text-g-600">{{ scope.row.description || '-' }}</span>
+              <span v-if="scope.row.description" class="text-g-600">{{
+                scope.row.description
+              }}</span>
+              <span v-else class="text-g-400">暂无描述</span>
             </template>
           </ElTableColumn>
         </template>

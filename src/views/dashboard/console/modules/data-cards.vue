@@ -6,19 +6,6 @@
         <ArtCountTo class="text-[32px] font-bold mt-2" :target="item.value" :duration="1500" />
         <div class="flex-c mt-2">
           <span class="text-xs text-g-600">{{ item.description }}</span>
-          <ArtSvgIcon
-            v-if="item.trend"
-            :icon="item.trend === 'up' ? 'ri:arrow-up-line' : 'ri:arrow-down-line'"
-            class="ml-1 text-sm"
-            :class="[item.trend === 'up' ? 'text-danger' : 'text-success']"
-          />
-          <span
-            v-if="item.change"
-            class="ml-0.5 text-xs font-semibold"
-            :class="[item.trend === 'up' ? 'text-danger' : 'text-success']"
-          >
-            {{ item.change }}
-          </span>
         </div>
       </div>
     </ElCol>
@@ -32,8 +19,6 @@
   interface DataCardItem {
     title: string
     value: number
-    change?: string
-    trend?: 'up' | 'down'
     description: string
   }
 
@@ -44,22 +29,16 @@
     {
       title: '会员总数',
       value: 0,
-      change: '20%',
-      trend: 'up',
       description: '今日新增: 0'
     },
     {
       title: '会话总数',
       value: 0,
-      change: '20%',
-      trend: 'up',
       description: '已分享: 0'
     },
     {
       title: '点赞数',
       value: 0,
-      change: '20%',
-      trend: 'up',
       description: '评论: 0 | 转发: 0'
     },
     {

@@ -11,6 +11,20 @@ import { AppRouteRecordRaw } from '@/utils/router'
  * 2、静态路由不管是否登录都可以访问
  */
 export const staticRoutes: AppRouteRecordRaw[] = [
+  // 主布局路由
+  {
+    path: '/',
+    name: 'Layout',
+    component: () => import('@views/index/index.vue'),
+    children: [
+      {
+        path: '/system/user-center',
+        name: 'UserCenterStatic',
+        component: () => import('@views/system/user-center/index.vue'),
+        meta: { title: '个人中心', keepAlive: true }
+      }
+    ]
+  },
   // 不需要登录就能访问的路由示例
   // {
   //   path: '/welcome',

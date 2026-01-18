@@ -31,6 +31,7 @@ const componentMap: Record<string, () => Promise<any>> = {
   '/system/user': () => import('@views/system/user/index.vue'),
   '/system/role': () => import('@views/system/role/index.vue'),
   '/system/menu': () => import('@views/system/menu/index.vue'),
+  '/system/user-center': () => import('@views/system/user-center/index.vue'),
 
   // 仪表盘
   '/dashboard': () => import('@views/dashboard/console/index.vue'),

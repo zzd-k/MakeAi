@@ -195,17 +195,11 @@
         page_size: pageSize.value
       }
 
-      // 添加搜索条件（如果后端支持按用户搜索）
-      if (searchForm.user) {
-        params.user_id = searchForm.user
-      }
-
       const res = await fetchAdminRecords(params)
 
       console.log('后端返回的数据:', res)
 
-      // 将后端数据转换为前端需要的格式
-      tableData.value = res.items.map((item: any) => ({
+      let filteredData = res.items.map((item: any) => ({
         id: item.id,
         title: item.meeting_name || item.title || `会议记录-${item.id}`,
         conversationId: String(item.id),
@@ -214,7 +208,19 @@
         actionType: '点赞'
       }))
 
-      total.value = res.total
+      // 前端过滤搜索（根据用户ID或标题）
+      if (searchForm.user) {
+        filteredData = filteredData.filter(
+          (item) =>
+            item.user.toLowerCase().includes(searchForm.user.toLowerCase()) ||
+            item.title.toLowerCase().includes(searchForm.user.toLowerCase())
+        )
+      }
+
+      tableData.value = filteredData
+      total.value = filteredData.length
+
+      console.log('过滤后数据条数:', tableData.value.length)
     } catch (error) {
       ElMessage.error('获取点赞记录失败')
       console.error(error)

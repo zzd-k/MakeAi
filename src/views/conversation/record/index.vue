@@ -312,23 +312,12 @@
         page_size: pageSize.value
       }
 
-      // 添加搜索条件
-      if (searchForm.title) {
-        params.meeting_name = searchForm.title
-      }
-      if (searchForm.type) {
-        params.kind = searchForm.type
-      }
-      if (searchForm.isShared !== '') {
-        params.is_shared = searchForm.isShared === '1'
-      }
-
       const res = await fetchAdminRecords(params)
 
       console.log('后端返回的数据:', res)
 
       // 将后端数据转换为前端需要的格式
-      tableData.value = res.items.map((item: any) => ({
+      let filteredData = res.items.map((item: any) => ({
         id: item.id,
         creator: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
         title: item.meeting_name || item.title || `会议记录-${item.id}`,
@@ -340,7 +329,26 @@
         shareId: item.share_id || null
       }))
 
-      total.value = res.total
+      // 前端过滤搜索
+      if (searchForm.title) {
+        filteredData = filteredData.filter((item) =>
+          item.title.toLowerCase().includes(searchForm.title.toLowerCase())
+        )
+      }
+      if (searchForm.type) {
+        filteredData = filteredData.filter((item) =>
+          item.type.toLowerCase().includes(searchForm.type.toLowerCase())
+        )
+      }
+      if (searchForm.isShared !== '') {
+        const isSharedBool = searchForm.isShared === '1'
+        filteredData = filteredData.filter((item) => item.isShared === isSharedBool)
+      }
+
+      tableData.value = filteredData
+      total.value = filteredData.length
+
+      console.log('过滤后数据条数:', tableData.value.length)
     } catch (error) {
       ElMessage.error('获取会话记录失败')
       console.error(error)

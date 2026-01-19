@@ -244,23 +244,24 @@
       // 先获取所有会话记录
       const recordsRes = await fetchAdminRecords({
         page: currentPage.value,
-        page_size: pageSize.value,
-        is_shared: true // 只获取已分享的会话
+        page_size: pageSize.value
       })
 
       console.log('会话记录:', recordsRes)
 
-      // 转换数据格式
-      let filteredData = recordsRes.items.map((item: any) => ({
-        id: item.id,
-        title: item.meeting_name || `会议记录-${item.id}`,
-        conversationId: String(item.id),
-        user: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
-        content: '评论',
-        commentTime: formatTime(item.created_at),
-        actionType: '会话',
-        recordId: item.id
-      }))
+      // 转换数据格式，并过滤出已分享的会话
+      let filteredData = recordsRes.items
+        .filter((item: any) => item.is_shared) // 前端过滤已分享的会话
+        .map((item: any) => ({
+          id: item.id,
+          title: item.meeting_name || `会议记录-${item.id}`,
+          conversationId: String(item.id),
+          user: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
+          content: '评论',
+          commentTime: formatTime(item.created_at),
+          actionType: '会话',
+          recordId: item.id
+        }))
 
       // 前端过滤搜索（根据用户ID或标题）
       if (searchForm.user) {

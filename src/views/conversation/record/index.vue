@@ -39,12 +39,12 @@
     </div>
 
     <!-- 操作按钮 -->
-    <div class="art-card p-5 mb-5">
+    <!-- <div class="art-card p-5 mb-5">
       <ElButton type="primary" @click="handleAdd">{{
         $t('pages.conversationRecord.add')
       }}</ElButton>
       <ElButton @click="handleExport">{{ $t('pages.conversationRecord.export') }}</ElButton>
-    </div>
+    </div> -->
 
     <!-- 数据表格 -->
     <div class="art-card p-5">
@@ -245,7 +245,7 @@
 <script setup lang="ts">
   import { ref, reactive, computed, watch, onMounted } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import { fetchAdminRecords, deleteAdminRecord } from '@/api/admin'
+  import { fetchAdminRecords, deleteAdminRecord, updateAdminRecord } from '@/api/admin'
   import { fetchComments } from '@/api/social'
   import { ElMessage, ElMessageBox, ElIcon } from 'element-plus'
   import { Loading } from '@element-plus/icons-vue'
@@ -305,12 +305,27 @@
   const fetchConversationRecords = async () => {
     try {
       loading.value = true
-      const res = await fetchAdminRecords({
+
+      // 构建查询参数
+      const params: any = {
         page: currentPage.value,
         page_size: pageSize.value
-      })
+      }
 
-      console.log('后端返回的数据:', res) // 调试用，查看实际返回的数据结构
+      // 添加搜索条件
+      if (searchForm.title) {
+        params.meeting_name = searchForm.title
+      }
+      if (searchForm.type) {
+        params.kind = searchForm.type
+      }
+      if (searchForm.isShared !== '') {
+        params.is_shared = searchForm.isShared === '1'
+      }
+
+      const res = await fetchAdminRecords(params)
+
+      console.log('后端返回的数据:', res)
 
       // 将后端数据转换为前端需要的格式
       tableData.value = res.items.map((item: any) => ({
@@ -440,7 +455,31 @@
   }
 
   const handleEdit = async (row: ConversationItem) => {
-    ElMessage.info('编辑功能开发中')
+    try {
+      const { value: newTitle } = await ElMessageBox.prompt('请输入新的会话标题', '编辑会话', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: row.title,
+        inputValidator: (value) => {
+          if (!value || value.trim() === '') {
+            return '会话标题不能为空'
+          }
+          return true
+        }
+      })
+
+      if (newTitle) {
+        // 调用更新会议记录接口
+        await updateAdminRecord(row.id, { meeting_name: newTitle })
+        ElMessage.success('编辑成功')
+        fetchConversationRecords()
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('编辑失败:', error)
+        ElMessage.error('编辑失败')
+      }
+    }
   }
 
   // 删除

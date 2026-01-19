@@ -16,12 +16,6 @@
       </ElForm>
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="art-card p-5 mb-5">
-      <ElButton type="primary" @click="handleAdd">新增</ElButton>
-      <ElButton @click="handleExport">导出</ElButton>
-    </div>
-
     <!-- 数据表格 -->
     <div class="art-card p-5">
       <ArtTable
@@ -100,7 +94,7 @@
                   会话统计
                 </ElButton>
                 <ElButton type="primary" size="small" plain @click="handleShareRead(scope.row)">
-                  分享/阅读
+                  分享会话
                 </ElButton>
                 <ElButton type="warning" size="small" plain @click="handlePersonalCard(scope.row)">
                   卡片管理
@@ -404,13 +398,22 @@
   const fetchUserList = async () => {
     try {
       loading.value = true
-      const response = await fetchAdminUsers({
+
+      // 构建查询参数
+      const params: any = {
         page: currentPage.value,
         page_size: pageSize.value
-      })
+      }
+
+      console.log('搜索参数:', params)
+
+      const response = await fetchAdminUsers(params)
+
+      console.log('后端返回数据:', response)
+      console.log('API返回总数:', response.total)
 
       // 将API数据转换为表格数据格式
-      tableData.value = response.items.map((user) => ({
+      let filteredData = response.items.map((user) => ({
         memberId: String(user.id),
         nickname: user.nickname || user.username,
         avatar: user.avatar || avatar1,
@@ -425,7 +428,21 @@
         remark: '-'
       }))
 
-      total.value = response.total
+      // 前端过滤搜索（因为后端API不支持搜索参数）
+      if (searchForm.memberId) {
+        filteredData = filteredData.filter((item) => item.memberId.includes(searchForm.memberId))
+      }
+      if (searchForm.nickname) {
+        filteredData = filteredData.filter(
+          (item) =>
+            item.nickname && item.nickname.toLowerCase().includes(searchForm.nickname.toLowerCase())
+        )
+      }
+
+      tableData.value = filteredData
+      total.value = filteredData.length
+
+      console.log('过滤后数据条数:', tableData.value.length)
     } catch (error) {
       console.error('获取用户列表失败:', error)
       ElMessage.error('获取用户列表失败')

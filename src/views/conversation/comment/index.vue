@@ -19,12 +19,6 @@
       </ElForm>
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="art-card p-5 mb-5">
-      <ElButton type="primary" @click="handleAdd">{{ $t('pages.commentRecord.add') }}</ElButton>
-      <ElButton @click="handleExport">{{ $t('pages.commentRecord.export') }}</ElButton>
-    </div>
-
     <!-- 数据表格 -->
     <div class="art-card p-5">
       <ArtTable :data="displayData" style="width: 100%" :border="true" :stripe="true">
@@ -85,16 +79,13 @@
           </ElTableColumn>
           <ElTableColumn
             :label="$t('pages.commentRecord.edit')"
-            width="150"
+            width="200"
             align="center"
             fixed="right"
           >
             <template #default="scope">
-              <ElButton type="success" size="small" link @click="handleEdit(scope.row)">
-                {{ $t('pages.commentRecord.edit') }}
-              </ElButton>
-              <ElButton type="danger" size="small" link @click="handleDelete(scope.row)">
-                {{ $t('pages.commentRecord.delete') }}
+              <ElButton type="primary" size="small" link @click="handleViewComments(scope.row)">
+                查看评论
               </ElButton>
             </template>
           </ElTableColumn>
@@ -144,14 +135,59 @@
         </div>
       </div>
     </div>
+
+    <!-- 评论查看弹窗 -->
+    <ElDialog v-model="commentsDialogVisible" title="评论列表" width="70%" :destroy-on-close="true">
+      <div class="mb-4">
+        <span class="text-g-600">会话：</span>
+        <span class="font-medium">{{ currentRecord?.title }}</span>
+      </div>
+      <div v-if="commentsDialogLoading" class="text-center py-10">
+        <ElIcon class="is-loading"><Loading /></ElIcon>
+        <p class="mt-2 text-g-500">加载中...</p>
+      </div>
+      <div v-else-if="commentsList.length === 0" class="text-center text-g-500 py-10">
+        暂无评论
+      </div>
+      <ArtTable v-else :data="commentsList" style="width: 100%" :border="true" :stripe="true">
+        <template #default>
+          <ElTableColumn label="ID" prop="id" width="80" align="center" />
+          <ElTableColumn label="用户" prop="user_id" width="120">
+            <template #default="scope">
+              <span>USER-{{ scope.row.user_id }}</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="评论内容" prop="content" min-width="300" />
+          <ElTableColumn label="评论时间" prop="created_at" width="180" align="center">
+            <template #default="scope">
+              {{
+                scope.row.created_at ? new Date(scope.row.created_at).toLocaleString('zh-CN') : '-'
+              }}
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="操作" width="150" align="center" fixed="right">
+            <template #default="scope">
+              <ElButton type="success" size="small" link @click="handleEdit(scope.row)">
+                编辑
+              </ElButton>
+              <ElButton type="danger" size="small" link @click="handleDelete(scope.row)">
+                删除
+              </ElButton>
+            </template>
+          </ElTableColumn>
+        </template>
+      </ArtTable>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
   import { ref, reactive, computed, watch, onMounted } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import { fetchAdminRecords, deleteAdminRecord } from '@/api/admin'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { fetchAdminRecords } from '@/api/admin'
+  import { fetchComments, updateComment, deleteComment } from '@/api/social'
+  import { ElMessage, ElMessageBox, ElIcon } from 'element-plus'
+  import { Loading } from '@element-plus/icons-vue'
 
   defineOptions({ name: 'CommentRecord' })
 
@@ -165,6 +201,7 @@
     content: string
     commentTime: string
     actionType: string
+    recordId?: number
   }
 
   const searchForm = reactive({
@@ -200,32 +237,47 @@
     }
   }
 
-  // 获取评论记录列表
   const fetchCommentRecords = async () => {
     try {
       loading.value = true
-      const res = await fetchAdminRecords({
+
+      // 先获取所有会话记录
+      const recordsRes = await fetchAdminRecords({
         page: currentPage.value,
-        page_size: pageSize.value
+        page_size: pageSize.value,
+        is_shared: true // 只获取已分享的会话
       })
 
-      console.log('后端返回的数据:', res) // 调试用，查看实际返回的数据结构
+      console.log('会话记录:', recordsRes)
 
-      // 将后端数据转换为前端需要的格式
-      tableData.value = res.items.map((item: any) => ({
+      // 转换数据格式
+      let filteredData = recordsRes.items.map((item: any) => ({
         id: item.id,
-        title: item.meeting_name || item.title || `会议记录-${item.id}`,
+        title: item.meeting_name || `会议记录-${item.id}`,
         conversationId: String(item.id),
         user: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
-        content: item.content || item.description || '很棒',
+        content: '评论',
         commentTime: formatTime(item.created_at),
-        actionType: '评论'
+        actionType: '会话',
+        recordId: item.id
       }))
 
-      total.value = res.total
+      // 前端过滤搜索（根据用户ID或标题）
+      if (searchForm.user) {
+        filteredData = filteredData.filter(
+          (item) =>
+            item.user.toLowerCase().includes(searchForm.user.toLowerCase()) ||
+            item.title.toLowerCase().includes(searchForm.user.toLowerCase())
+        )
+      }
+
+      tableData.value = filteredData
+      total.value = filteredData.length
+
+      console.log('过滤后数据条数:', tableData.value.length)
     } catch (error) {
+      console.error('获取评论记录失败:', error)
       ElMessage.error('获取评论记录失败')
-      console.error(error)
     } finally {
       loading.value = false
     }
@@ -244,30 +296,85 @@
     fetchCommentRecords()
   }
 
-  const handleAdd = () => {
-    ElMessage.info('新增功能开发中')
-  }
-
   const handleExport = () => {
     ElMessage.info('导出功能开发中')
   }
 
-  const handleEdit = async (row: CommentItem) => {
-    ElMessage.info('编辑功能开发中')
+  // 查看评论弹窗
+  const commentsDialogVisible = ref(false)
+  const commentsDialogLoading = ref(false)
+  const commentsList = ref<any[]>([])
+  const currentRecord = ref<CommentItem | null>(null)
+
+  const handleViewComments = async (row: CommentItem) => {
+    currentRecord.value = row
+    commentsDialogVisible.value = true
+    commentsDialogLoading.value = true
+
+    try {
+      const res = await fetchComments(row.recordId!, {
+        page: 1,
+        page_size: 100
+      })
+
+      commentsList.value = res.items || []
+      console.log('评论列表:', commentsList.value)
+    } catch (error) {
+      console.error('获取评论失败:', error)
+      ElMessage.error('获取评论失败')
+      commentsList.value = []
+    } finally {
+      commentsDialogLoading.value = false
+    }
   }
 
-  // 删除
-  const handleDelete = async (row: CommentItem) => {
+  // 编辑评论
+  const handleEdit = async (comment: any) => {
     try {
-      await ElMessageBox.confirm('确定要删除这条评论记录吗？', '提示', {
+      const { value: newContent } = await ElMessageBox.prompt('请输入新的评论内容', '编辑评论', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: comment.content,
+        inputType: 'textarea',
+        inputValidator: (value) => {
+          if (!value || value.trim() === '') {
+            return '评论内容不能为空'
+          }
+          return true
+        }
+      })
+
+      if (newContent) {
+        await updateComment(comment.id, { content: newContent })
+        ElMessage.success('编辑成功')
+        // 重新加载评论列表
+        if (currentRecord.value) {
+          handleViewComments(currentRecord.value)
+        }
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('编辑失败:', error)
+        ElMessage.error('编辑失败')
+      }
+    }
+  }
+
+  // 删除评论
+  const handleDelete = async (comment: any) => {
+    try {
+      await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       })
 
-      await deleteAdminRecord(row.id)
+      await deleteComment(comment.id)
       ElMessage.success('删除成功')
-      fetchCommentRecords()
+      // 重新加载评论列表
+      if (currentRecord.value) {
+        handleViewComments(currentRecord.value)
+      }
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('删除失败')

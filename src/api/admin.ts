@@ -55,6 +55,15 @@ export function fetchAdminRecordDetail(recordId: number) {
   })
 }
 
+/** 更新会议记录 */
+export function updateAdminRecord(recordId: number, data: any) {
+  return request.put<void>({
+    url: `/admin/records/${recordId}`,
+    data,
+    showSuccessMessage: true
+  })
+}
+
 /** 删除会议记录 */
 export function deleteAdminRecord(recordId: number) {
   return request.del<void>({

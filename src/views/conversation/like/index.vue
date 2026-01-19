@@ -19,12 +19,6 @@
       </ElForm>
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="art-card p-5 mb-5">
-      <ElButton type="primary" @click="handleAdd">{{ $t('pages.likeRecord.add') }}</ElButton>
-      <ElButton @click="handleExport">{{ $t('pages.likeRecord.export') }}</ElButton>
-    </div>
-
     <!-- 数据表格 -->
     <div class="art-card p-5">
       <ArtTable :data="displayData" style="width: 100%" :border="true" :stripe="true">
@@ -82,18 +76,10 @@
               </ElTag>
             </template>
           </ElTableColumn>
-          <ElTableColumn
-            :label="$t('pages.likeRecord.edit')"
-            width="150"
-            align="center"
-            fixed="right"
-          >
+          <ElTableColumn label="操作" width="100" align="center" fixed="right">
             <template #default="scope">
-              <ElButton type="success" size="small" link @click="handleEdit(scope.row)">
-                {{ $t('pages.likeRecord.edit') }}
-              </ElButton>
-              <ElButton type="danger" size="small" link @click="handleDelete(scope.row)">
-                {{ $t('pages.likeRecord.delete') }}
+              <ElButton type="primary" size="small" link @click="handleView(scope.row)">
+                查看
               </ElButton>
             </template>
           </ElTableColumn>
@@ -202,12 +188,21 @@
   const fetchLikeRecords = async () => {
     try {
       loading.value = true
-      const res = await fetchAdminRecords({
+
+      // 构建查询参数
+      const params: any = {
         page: currentPage.value,
         page_size: pageSize.value
-      })
+      }
 
-      console.log('后端返回的数据:', res) // 调试用，查看实际返回的数据结构
+      // 添加搜索条件（如果后端支持按用户搜索）
+      if (searchForm.user) {
+        params.user_id = searchForm.user
+      }
+
+      const res = await fetchAdminRecords(params)
+
+      console.log('后端返回的数据:', res)
 
       // 将后端数据转换为前端需要的格式
       tableData.value = res.items.map((item: any) => ({
@@ -241,35 +236,32 @@
     fetchLikeRecords()
   }
 
-  const handleAdd = () => {
-    ElMessage.info('新增功能开发中')
-  }
-
   const handleExport = () => {
     ElMessage.info('导出功能开发中')
   }
 
-  const handleEdit = async (row: LikeItem) => {
-    ElMessage.info('编辑功能开发中')
-  }
-
-  // 删除
-  const handleDelete = async (row: LikeItem) => {
+  const handleView = async (row: LikeItem) => {
     try {
-      await ElMessageBox.confirm('确定要删除这条点赞记录吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-
-      await deleteAdminRecord(row.id)
-      ElMessage.success('删除成功')
-      fetchLikeRecords()
+      // 打开详情弹窗显示点赞记录详情
+      await ElMessageBox.alert(
+        `
+        <div style="line-height: 1.8;">
+          <p><strong>ID：</strong>${row.id}</p>
+          <p><strong>会话标题：</strong>${row.title}</p>
+          <p><strong>会话ID：</strong>${row.conversationId}</p>
+          <p><strong>用户：</strong>${row.user}</p>
+          <p><strong>点赞时间：</strong>${row.likeTime}</p>
+          <p><strong>操作类型：</strong>${row.actionType}</p>
+        </div>
+      `,
+        '点赞记录详情',
+        {
+          confirmButtonText: '关闭',
+          dangerouslyUseHTMLString: true
+        }
+      )
     } catch (error) {
-      if (error !== 'cancel') {
-        ElMessage.error('删除失败')
-        console.error(error)
-      }
+      // 用户点击关闭按钮
     }
   }
 

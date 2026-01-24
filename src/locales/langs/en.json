@@ -392,6 +392,7 @@
       "views": "Views",
       "conversationDetail": "Conversation Detail",
       "commentRecord": "Comment Record",
+      "operation": "Operation",
       "edit": "Edit",
       "delete": "Delete",
       "placeholder": "Please enter"
@@ -409,8 +410,8 @@
       "likeTime": "Like Time",
       "actionType": "Action Type",
       "like": "Like",
-      "edit": "Edit",
-      "delete": "Delete",
+      "operation": "Operation",
+      "view": "View",
       "placeholder": "Please enter"
     },
     "commentRecord": {
@@ -427,8 +428,10 @@
       "commentTime": "Comment Time",
       "actionType": "Action Type",
       "comment": "Comment",
+      "operation": "Operation",
       "edit": "Edit",
       "delete": "Delete",
+      "viewComments": "View Comments",
       "placeholder": "Please enter"
     },
     "pagination": {

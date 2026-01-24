@@ -76,10 +76,15 @@
               </ElTag>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="操作" width="100" align="center" fixed="right">
+          <ElTableColumn
+            :label="$t('pages.likeRecord.operation')"
+            width="100"
+            align="center"
+            fixed="right"
+          >
             <template #default="scope">
               <ElButton type="primary" size="small" link @click="handleView(scope.row)">
-                查看
+                {{ $t('pages.likeRecord.view') }}
               </ElButton>
             </template>
           </ElTableColumn>
@@ -195,35 +200,33 @@
         page_size: pageSize.value
       }
 
+      // 添加搜索参数
+      if (searchForm.user) {
+        params.search = searchForm.user
+      }
+
       const res = await fetchAdminRecords(params)
 
       console.log('后端返回的数据:', res)
 
-      let filteredData = res.items.map((item: any) => ({
+      const convertedData = res.items.map((item: any) => ({
         id: item.id,
-        title: item.meeting_name || item.title || `会议记录-${item.id}`,
+        title: item.meeting_name || item.title || `会话记录-${item.id}`,
         conversationId: String(item.id),
         user: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
         likeTime: formatTime(item.created_at),
         actionType: '点赞'
       }))
 
-      // 前端过滤搜索（根据用户ID或标题）
-      if (searchForm.user) {
-        filteredData = filteredData.filter(
-          (item) =>
-            item.user.toLowerCase().includes(searchForm.user.toLowerCase()) ||
-            item.title.toLowerCase().includes(searchForm.user.toLowerCase())
-        )
-      }
+      tableData.value = convertedData
+      total.value = res.total || 0
 
-      tableData.value = filteredData
-      total.value = filteredData.length
-
-      console.log('过滤后数据条数:', tableData.value.length)
+      console.log('数据条数:', tableData.value.length, '总数:', total.value)
     } catch (error) {
       ElMessage.error('获取点赞记录失败')
       console.error(error)
+      tableData.value = []
+      total.value = 0
     } finally {
       loading.value = false
     }

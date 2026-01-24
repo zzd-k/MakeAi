@@ -58,6 +58,21 @@ declare namespace Api {
       description: string | null
       view_count: number
       duration?: number
+      share_id?: string | null
+      transcript?: string | null
+      transcript_with_speaker?: string | null
+      analysis_status?: string
+      analysis?: {
+        task_id?: string
+        raw_result?: any[]
+        gemini_error?: string
+        speaker_segments?: any[]
+        transcript?: string
+        summary?: string
+        audio_url?: string
+        status?: string
+      } | null
+      analysis_result?: string | null
       // 其它字段按需补充
     }
 

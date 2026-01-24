@@ -392,6 +392,7 @@
       "views": "浏览量",
       "conversationDetail": "会话详情",
       "commentRecord": "评论记录",
+      "operation": "操作",
       "edit": "编辑",
       "delete": "删除",
       "placeholder": "请输入"
@@ -409,8 +410,8 @@
       "likeTime": "点赞时间",
       "actionType": "操作类型",
       "like": "点赞",
-      "edit": "编辑",
-      "delete": "删除",
+      "operation": "操作",
+      "view": "查看",
       "placeholder": "请输入"
     },
     "commentRecord": {
@@ -427,8 +428,10 @@
       "commentTime": "评论时间",
       "actionType": "操作类型",
       "comment": "评论",
+      "operation": "操作",
       "edit": "编辑",
       "delete": "删除",
+      "viewComments": "查看评论",
       "placeholder": "请输入"
     },
     "pagination": {

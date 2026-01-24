@@ -78,14 +78,14 @@
             </template>
           </ElTableColumn>
           <ElTableColumn
-            :label="$t('pages.commentRecord.edit')"
-            width="200"
+            :label="$t('pages.commentRecord.operation')"
+            width="250"
             align="center"
             fixed="right"
           >
             <template #default="scope">
               <ElButton type="primary" size="small" link @click="handleViewComments(scope.row)">
-                查看评论
+                {{ $t('pages.commentRecord.viewComments') }}
               </ElButton>
             </template>
           </ElTableColumn>
@@ -165,14 +165,29 @@
               }}
             </template>
           </ElTableColumn>
-          <ElTableColumn label="操作" width="150" align="center" fixed="right">
+          <ElTableColumn
+            :label="$t('pages.commentRecord.operation')"
+            width="200"
+            align="center"
+            fixed="right"
+          >
             <template #default="scope">
-              <ElButton type="success" size="small" link @click="handleEdit(scope.row)">
-                编辑
-              </ElButton>
-              <ElButton type="danger" size="small" link @click="handleDelete(scope.row)">
-                删除
-              </ElButton>
+              <ElDropdown @command="(command) => handleCommentCommand(command, scope.row)">
+                <ElButton type="primary" size="small">
+                  {{ $t('pages.commentRecord.operation') }}
+                  <ElIcon class="el-icon--right"><ArrowDown /></ElIcon>
+                </ElButton>
+                <template #dropdown>
+                  <ElDropdownMenu>
+                    <ElDropdownItem command="edit">
+                      {{ $t('pages.commentRecord.edit') }}
+                    </ElDropdownItem>
+                    <ElDropdownItem command="delete">
+                      {{ $t('pages.commentRecord.delete') }}
+                    </ElDropdownItem>
+                  </ElDropdownMenu>
+                </template>
+              </ElDropdown>
             </template>
           </ElTableColumn>
         </template>
@@ -187,7 +202,7 @@
   import { fetchAdminRecords } from '@/api/admin'
   import { fetchComments, updateComment, deleteComment } from '@/api/social'
   import { ElMessage, ElMessageBox, ElIcon } from 'element-plus'
-  import { Loading } from '@element-plus/icons-vue'
+  import { Loading, ArrowDown } from '@element-plus/icons-vue'
 
   defineOptions({ name: 'CommentRecord' })
 
@@ -241,20 +256,35 @@
     try {
       loading.value = true
 
-      // 先获取所有会话记录
-      const recordsRes = await fetchAdminRecords({
+      // 构建查询参数
+      const params: any = {
         page: currentPage.value,
         page_size: pageSize.value
-      })
+      }
+
+      // 添加搜索参数
+      if (searchForm.user) {
+        params.search = searchForm.user
+      }
+
+      const recordsRes = await fetchAdminRecords(params)
 
       console.log('会话记录:', recordsRes)
 
+      // 检查返回数据是否有效
+      if (!recordsRes || !Array.isArray(recordsRes.items)) {
+        console.warn('返回数据格式不正确:', recordsRes)
+        tableData.value = []
+        total.value = 0
+        return
+      }
+
       // 转换数据格式，并过滤出已分享的会话
-      let filteredData = recordsRes.items
+      const filteredData = recordsRes.items
         .filter((item: any) => item.is_shared) // 前端过滤已分享的会话
         .map((item: any) => ({
           id: item.id,
-          title: item.meeting_name || `会议记录-${item.id}`,
+          title: item.meeting_name || `会话记录-${item.id}`,
           conversationId: String(item.id),
           user: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
           content: '评论',
@@ -263,22 +293,15 @@
           recordId: item.id
         }))
 
-      // 前端过滤搜索（根据用户ID或标题）
-      if (searchForm.user) {
-        filteredData = filteredData.filter(
-          (item) =>
-            item.user.toLowerCase().includes(searchForm.user.toLowerCase()) ||
-            item.title.toLowerCase().includes(searchForm.user.toLowerCase())
-        )
-      }
-
       tableData.value = filteredData
-      total.value = filteredData.length
+      total.value = recordsRes.total || 0
 
-      console.log('过滤后数据条数:', tableData.value.length)
+      console.log('数据条数:', tableData.value.length, '总数:', total.value)
     } catch (error) {
       console.error('获取评论记录失败:', error)
       ElMessage.error('获取评论记录失败')
+      tableData.value = []
+      total.value = 0
     } finally {
       loading.value = false
     }
@@ -381,6 +404,15 @@
         ElMessage.error('删除失败')
         console.error(error)
       }
+    }
+  }
+
+  // 处理评论下拉菜单命令
+  const handleCommentCommand = (command: string, comment: any) => {
+    if (command === 'edit') {
+      handleEdit(comment)
+    } else if (command === 'delete') {
+      handleDelete(comment)
     }
   }
 

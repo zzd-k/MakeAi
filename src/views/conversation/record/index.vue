@@ -130,7 +130,7 @@
             </template>
           </ElTableColumn>
           <ElTableColumn
-            :label="$t('pages.conversationRecord.edit')"
+            :label="$t('pages.conversationRecord.operation')"
             width="280"
             align="center"
             fixed="right"
@@ -213,27 +213,63 @@
 
     <!-- 评论记录弹窗 -->
     <ElDialog v-model="commentsVisible" title="评论记录" width="70%" :destroy-on-close="true">
-      <div class="mb-4">
-        <span class="text-g-600">会话：</span>
-        <span class="font-medium">{{ currentConversation?.title }}</span>
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <span class="text-g-600">会话：</span>
+          <span class="font-medium">{{ currentConversation?.title }}</span>
+        </div>
+        <ElInput
+          v-model="commentSearchKeyword"
+          placeholder="搜索用户或评论内容"
+          clearable
+          style="width: 300px"
+        >
+          <template #prefix>
+            <ElIcon><Search /></ElIcon>
+          </template>
+        </ElInput>
       </div>
       <div v-if="commentsLoading" class="text-center py-10">
         <ElIcon class="is-loading"><Loading /></ElIcon>
         <p class="mt-2 text-g-500">加载中...</p>
       </div>
-      <div v-else-if="commentsList.length === 0" class="text-center text-g-500 py-10">
-        暂无评论
+      <div v-else-if="filteredCommentsList.length === 0" class="text-center text-g-500 py-10">
+        {{ commentSearchKeyword ? '没有找到匹配的评论' : '暂无评论' }}
       </div>
-      <ArtTable v-else :data="commentsList" style="width: 100%" :border="true" :stripe="true">
+      <ArtTable
+        v-else
+        :data="filteredCommentsList"
+        style="width: 100%"
+        :border="true"
+        :stripe="true"
+      >
         <template #default>
           <ElTableColumn label="ID" prop="id" width="80" align="center" />
-          <ElTableColumn label="用户" prop="user" width="150" />
-          <ElTableColumn label="评论内容" prop="content" min-width="300" />
-          <ElTableColumn label="评论时间" prop="created_at" width="180" align="center">
+          <ElTableColumn label="用户" width="150">
+            <template #default="scope">
+              <span>{{ scope.row.user }}</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="评论内容" min-width="300">
+            <template #default="scope">
+              <span>{{ scope.row.content }}</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="评论时间" width="180" align="center">
             <template #default="scope">
               {{
                 scope.row.created_at ? new Date(scope.row.created_at).toLocaleString('zh-CN') : '-'
               }}
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="操作" width="150" align="center" fixed="right">
+            <template #default="scope">
+              <ElButton type="success" size="small" link @click="handleEditComment(scope.row)">
+                编辑
+              </ElButton>
+              <ElButton type="danger" size="small" link @click="handleDeleteComment(scope.row)">
+                删除
+              </ElButton>
             </template>
           </ElTableColumn>
         </template>
@@ -245,10 +281,15 @@
 <script setup lang="ts">
   import { ref, reactive, computed, watch, onMounted } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import { fetchAdminRecords, deleteAdminRecord, updateAdminRecord } from '@/api/admin'
-  import { fetchComments } from '@/api/social'
+  import {
+    fetchAdminRecords,
+    deleteAdminRecord,
+    updateAdminRecord,
+    fetchAdminRecordDetail
+  } from '@/api/admin'
+  import { fetchComments, updateComment, deleteComment } from '@/api/social'
   import { ElMessage, ElMessageBox, ElIcon } from 'element-plus'
-  import { Loading } from '@element-plus/icons-vue'
+  import { Loading, Search } from '@element-plus/icons-vue'
 
   defineOptions({ name: 'ConversationRecord' })
 
@@ -264,6 +305,18 @@
     createTime: string
     views: number
     shareId?: string | null
+    transcript?: string | null
+    analysisStatus?: string
+    analysis?: {
+      task_id?: string
+      raw_result?: any[]
+      gemini_error?: string
+      speaker_segments?: any[]
+      transcript?: string
+      summary?: string
+      audio_url?: string
+      status?: string
+    } | null
   }
 
   const searchForm = reactive({
@@ -309,15 +362,25 @@
       // 构建查询参数
       const params: any = {
         page: currentPage.value,
-        page_size: pageSize.value
+        page_size: pageSize.value,
+        include_analysis: true
+      }
+
+      // 添加搜索参数
+      if (searchForm.title) {
+        params.search = searchForm.title
+      }
+
+      // 添加会话类型参数
+      if (searchForm.type) {
+        params.meeting_type = searchForm.type
       }
 
       const res = await fetchAdminRecords(params)
 
       console.log('后端返回的数据:', res)
 
-      // 将后端数据转换为前端需要的格式
-      let filteredData = res.items.map((item: any) => ({
+      const convertedData = res.items.map((item: any) => ({
         id: item.id,
         creator: item.owner_id ? `USER-${item.owner_id}` : 'Unknown',
         title: item.meeting_name || item.title || `会议记录-${item.id}`,
@@ -326,38 +389,34 @@
         shareDesc: item.description || item.share_desc || '暂无描述',
         createTime: formatTime(item.created_at),
         views: item.view_count || 0,
-        shareId: item.share_id || null
+        shareId: item.share_id || null,
+        transcript: item.transcript || null,
+        analysisStatus: item.analysis_status || null,
+        analysis: item.analysis || null
       }))
 
-      // 前端过滤搜索
-      if (searchForm.title) {
-        filteredData = filteredData.filter((item) =>
-          item.title.toLowerCase().includes(searchForm.title.toLowerCase())
-        )
-      }
-      if (searchForm.type) {
-        filteredData = filteredData.filter((item) =>
-          item.type.toLowerCase().includes(searchForm.type.toLowerCase())
-        )
-      }
+      // 前端过滤是否分享（后端可能不支持这个参数）
+      let filteredData = convertedData
       if (searchForm.isShared !== '') {
         const isSharedBool = searchForm.isShared === '1'
-        filteredData = filteredData.filter((item) => item.isShared === isSharedBool)
+        filteredData = convertedData.filter((item) => item.isShared === isSharedBool)
       }
 
       tableData.value = filteredData
-      total.value = filteredData.length
+      total.value = res.total || 0
 
-      console.log('过滤后数据条数:', tableData.value.length)
+      console.log('数据条数:', tableData.value.length, '总数:', total.value)
     } catch (error) {
       ElMessage.error('获取会话记录失败')
       console.error(error)
+      tableData.value = []
+      total.value = 0
     } finally {
       loading.value = false
     }
   }
 
-  // 搜索
+  // 搜索（使用后端接口）
   const handleSearch = () => {
     currentPage.value = 1
     fetchConversationRecords()
@@ -390,24 +449,77 @@
 
       console.log('点击会话详情，会话ID:', row.id, '分享ID:', row.shareId)
 
-      // 如果有 share_id，直接构建后端H5分享页URL
+      // 如果有 share_id，先获取完整的记录详情（包含 analysis 数据）
       if (row.shareId) {
-        const apiUrl = import.meta.env.VITE_API_URL || ''
+        // 显示加载提示
+        const loadingMessage = ElMessage({
+          message: '正在加载会话详情...',
+          type: 'info',
+          duration: 0
+        })
 
-        let backendUrl = ''
-        if (apiUrl.startsWith('http')) {
-          // 如果是完整URL，直接使用
-          backendUrl = apiUrl
-        } else {
-          backendUrl = 'https://www.finecv.cn' // 默认后端地址，请根据实际情况修改
+        try {
+          // 获取完整的记录详情，确保包含 analysis 数据
+          const recordDetail = await fetchAdminRecordDetail(row.id)
+          console.log('获取到的记录详情:', recordDetail)
+
+          loadingMessage.close()
+
+          // 详细检查 analysis 数据
+          if (recordDetail.analysis) {
+            console.log('Analysis 数据:', recordDetail.analysis)
+
+            // 检查是否有错误信息
+            if (recordDetail.analysis.gemini_error) {
+              ElMessage.warning(`分析出现问题: ${recordDetail.analysis.gemini_error}`)
+            }
+
+            // 检查转录文本
+            if (
+              !recordDetail.transcript &&
+              (!recordDetail.analysis.raw_result || recordDetail.analysis.raw_result.length === 0)
+            ) {
+              ElMessage.warning('该会话的转录文本为空，可能是音频识别失败或音频内容为空')
+            }
+          } else {
+            console.warn('该会话暂无 analysis 数据')
+            ElMessage.warning('该会话暂无分析数据，可能还在处理中')
+          }
+
+          // 构建后端H5分享页URL
+          const apiUrl = import.meta.env.VITE_API_URL || ''
+
+          let backendUrl = ''
+          if (apiUrl.startsWith('http')) {
+            // 如果是完整URL，直接使用
+            backendUrl = apiUrl
+          } else {
+            backendUrl = 'https://www.finecv.cn' // 默认后端地址，请根据实际情况修改
+          }
+
+          // 移除末尾的 /api 等路径
+          backendUrl = backendUrl.replace(/\/api\/?$/, '')
+
+          const h5Url = `${backendUrl}/share/h5/${row.shareId}`
+          console.log('打开H5分享页:', h5Url)
+          window.open(h5Url, '_blank')
+        } catch (error) {
+          loadingMessage.close()
+          console.error('获取记录详情失败:', error)
+          ElMessage.error('获取记录详情失败，但仍尝试打开分享页')
+
+          // 即使获取详情失败，也尝试打开分享页
+          const apiUrl = import.meta.env.VITE_API_URL || ''
+          let backendUrl = ''
+          if (apiUrl.startsWith('http')) {
+            backendUrl = apiUrl
+          } else {
+            backendUrl = 'https://www.finecv.cn'
+          }
+          backendUrl = backendUrl.replace(/\/api\/?$/, '')
+          const h5Url = `${backendUrl}/share/h5/${row.shareId}`
+          window.open(h5Url, '_blank')
         }
-
-        // 移除末尾的 /api 等路径
-        backendUrl = backendUrl.replace(/\/api\/?$/, '')
-
-        const h5Url = `${backendUrl}/share/h5/${row.shareId}`
-        console.log('打开H5分享页:', h5Url)
-        window.open(h5Url, '_blank')
         return
       }
 
@@ -432,36 +544,91 @@
   const commentsList = ref<any[]>([])
   const currentConversation = ref<ConversationItem | null>(null)
 
+  // 评论搜索关键词
+  const commentSearchKeyword = ref('')
+  // 所有评论数据
+  const allCommentsList = ref<any[]>([])
+  // 过滤后的评论列表
+  const filteredCommentsList = computed(() => {
+    if (!commentSearchKeyword.value) {
+      return allCommentsList.value
+    }
+    const keyword = commentSearchKeyword.value.toLowerCase()
+    return allCommentsList.value.filter(
+      (item) =>
+        item.user.toLowerCase().includes(keyword) || item.content.toLowerCase().includes(keyword)
+    )
+  })
+
   const handleComments = async (row: ConversationItem) => {
     currentConversation.value = row
     commentsVisible.value = true
     commentsLoading.value = true
+    commentSearchKeyword.value = '' // 重置搜索
 
     try {
       // 调用获取评论列表的API
       const response = await fetchComments(row.id, {
         page: 1,
-        page_size: 100 // 获取所有评论
+        page_size: 100 // 改为合理的数值
       })
 
-      // 转换数据格式
-      commentsList.value = response.items.map((item: any) => ({
-        id: item.id,
-        user: item.user_id ? `USER-${item.user_id}` : '未知用户',
-        content: item.content,
-        created_at: item.created_at
-      }))
+      console.log('评论API返回数据:', response)
 
-      console.log('评论列表:', commentsList.value)
+      if (response && Array.isArray(response.comments)) {
+        allCommentsList.value = response.comments.map((item: any) => ({
+          id: item.id,
+          user:
+            item.user?.nickname ||
+            item.user?.username ||
+            (item.user_id ? `USER-${item.user_id}` : '未知用户'),
+          content: item.content,
+          created_at: item.created_at,
+          like_count: item.like_count || 0,
+          replies: item.replies || []
+        }))
+      } else if (response && Array.isArray(response.items)) {
+        // 兼容 items 字段
+        allCommentsList.value = response.items.map((item: any) => ({
+          id: item.id,
+          user:
+            item.user?.nickname ||
+            item.user?.username ||
+            (item.user_id ? `USER-${item.user_id}` : '未知用户'),
+          content: item.content,
+          created_at: item.created_at,
+          like_count: item.like_count || 0,
+          replies: item.replies || []
+        }))
+      } else if (response && Array.isArray(response)) {
+        // 如果直接返回数组
+        allCommentsList.value = response.map((item: any) => ({
+          id: item.id,
+          user:
+            item.user?.nickname ||
+            item.user?.username ||
+            (item.user_id ? `USER-${item.user_id}` : '未知用户'),
+          content: item.content,
+          created_at: item.created_at,
+          like_count: item.like_count || 0,
+          replies: item.replies || []
+        }))
+      } else {
+        console.warn('评论数据格式不正确:', response)
+        allCommentsList.value = []
+      }
+
+      console.log('评论列表:', allCommentsList.value)
     } catch (error) {
       console.error('获取评论失败:', error)
       ElMessage.error('获取评论失败')
-      commentsList.value = []
+      allCommentsList.value = []
     } finally {
       commentsLoading.value = false
     }
   }
 
+  // 编辑会话
   const handleEdit = async (row: ConversationItem) => {
     try {
       const { value: newTitle } = await ElMessageBox.prompt('请输入新的会话标题', '编辑会话', {
@@ -480,6 +647,7 @@
         // 调用更新会议记录接口
         await updateAdminRecord(row.id, { meeting_name: newTitle })
         ElMessage.success('编辑成功')
+        // 重新加载数据
         fetchConversationRecords()
       }
     } catch (error) {
@@ -524,6 +692,63 @@
       currentPage.value = page
       jumpPage.value = ''
       fetchConversationRecords()
+    }
+  }
+
+  // 编辑评论
+  const handleEditComment = async (comment: any) => {
+    try {
+      const { value: newContent } = await ElMessageBox.prompt('请输入新的评论内容', '编辑评论', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: comment.content,
+        inputType: 'textarea',
+        inputValidator: (value) => {
+          if (!value || value.trim() === '') {
+            return '评论内容不能为空'
+          }
+          return true
+        }
+      })
+
+      if (newContent) {
+        // 调用更新评论接口，使用 comment_id
+        await updateComment(comment.id, { content: newContent })
+        ElMessage.success('编辑成功')
+        // 重新加载评论列表
+        if (currentConversation.value) {
+          handleComments(currentConversation.value)
+        }
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('编辑评论失败:', error)
+        ElMessage.error('编辑评论失败')
+      }
+    }
+  }
+
+  // 删除评论
+  const handleDeleteComment = async (comment: any) => {
+    try {
+      await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+
+      // 调用删除评论接口，使用 comment_id
+      await deleteComment(comment.id)
+      ElMessage.success('删除成功')
+      // 重新加载评论列表
+      if (currentConversation.value) {
+        handleComments(currentConversation.value)
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除评论失败:', error)
+        ElMessage.error('删除评论失败')
+      }
     }
   }
 

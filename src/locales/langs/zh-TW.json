@@ -392,6 +392,7 @@
       "views": "瀏覽量",
       "conversationDetail": "會話詳情",
       "commentRecord": "評論記錄",
+      "operation": "操作",
       "edit": "編輯",
       "delete": "刪除",
       "placeholder": "請輸入"
@@ -409,8 +410,8 @@
       "likeTime": "點讚時間",
       "actionType": "操作類型",
       "like": "點讚",
-      "edit": "編輯",
-      "delete": "刪除",
+      "operation": "操作",
+      "view": "查看",
       "placeholder": "請輸入"
     },
     "commentRecord": {
@@ -427,8 +428,10 @@
       "commentTime": "評論時間",
       "actionType": "操作類型",
       "comment": "評論",
+      "operation": "操作",
       "edit": "編輯",
       "delete": "刪除",
+      "viewComments": "查看評論",
       "placeholder": "請輸入"
     },
     "pagination": {

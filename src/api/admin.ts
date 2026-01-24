@@ -48,10 +48,13 @@ export function fetchAdminRecords(query: Api.Admin.PageQuery) {
   })
 }
 
-/** 获取会议记录详情 */
+/** 获取会议记录详情（包含 analysis 数据） */
 export function fetchAdminRecordDetail(recordId: number) {
   return request.get<Api.Admin.RecordItem>({
-    url: `/admin/records/${recordId}`
+    url: `/admin/records/${recordId}`,
+    params: {
+      include_analysis: true // 请求包含 analysis 数据
+    }
   })
 }
 

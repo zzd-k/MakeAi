@@ -50,7 +50,6 @@
 
 <script setup lang="ts">
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
-  import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/hooks/core/useTable'
   import { fetchAdminUsers, fetchAdminUserDetail, updateAdminUserStatus } from '@/api/admin'
   import UserSearch from './modules/user-search.vue'
@@ -58,6 +57,7 @@
   import UserRoleDialog from './modules/user-role-dialog.vue'
   import { ElTag, ElMessageBox, ElImage, ElMessage } from 'element-plus'
   import { DialogType } from '@/types'
+  import { DEFAULT_AVATAR } from '@/utils/constants'
 
   defineOptions({ name: 'User' })
 
@@ -150,12 +150,14 @@
           label: '用户信息',
           width: 280,
           formatter: (row: UserListItem) => {
+            const avatarUrl = row.avatar || DEFAULT_AVATAR
             return h('div', { class: 'user flex-c' }, [
               h(ElImage, {
                 class: 'size-9.5 rounded-md',
-                src: row.avatar || ACCOUNT_TABLE_DATA[0].avatar,
-                previewSrcList: [row.avatar || ACCOUNT_TABLE_DATA[0].avatar],
-                previewTeleported: true
+                src: avatarUrl,
+                previewSrcList: [avatarUrl],
+                previewTeleported: true,
+                fit: 'cover'
               }),
               h('div', { class: 'ml-2' }, [
                 h('p', { class: 'user-name' }, row.username),

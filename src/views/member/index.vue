@@ -169,9 +169,9 @@
                 <ElInput v-model="cardSearch" placeholder="请输入" clearable />
               </ElFormItem>
               <ElFormItem>
-                <ElButton type="primary">搜索</ElButton>
-                <ElButton type="primary">新增</ElButton>
-                <ElButton>导出</ElButton>
+                <ElButton type="primary" @click="handleCardSearch">搜索</ElButton>
+                <ElButton type="primary" @click="handleCardAdd">新增</ElButton>
+                <ElButton @click="handleExport">导出</ElButton>
               </ElFormItem>
             </ElForm>
           </div>
@@ -199,10 +199,12 @@
                   <ElButton type="primary" size="small" link @click="handleCardPreview(scope.row)"
                     >预览</ElButton
                   >
-                  <ElButton type="success" size="small" link @click="handleCardEdit(scope.row)"
+                  <ElButton type="success" size="small" link @click="handleCardEditItem(scope.row)"
                     >编辑</ElButton
                   >
-                  <ElButton type="danger" size="small" link>删除</ElButton>
+                  <ElButton type="danger" size="small" link @click="handleCardDelete(scope.row)"
+                    >删除</ElButton
+                  >
                 </template>
               </ElTableColumn>
             </template>
@@ -355,7 +357,7 @@
   import avatar1 from '@/assets/images/avatar/avatar1.webp'
   import CardDetailForm from './CardDetailForm.vue'
   import { fetchAdminUsers, fetchAdminRecords } from '@/api/admin'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElMessageBox } from 'element-plus'
 
   defineOptions({ name: 'MemberCenter' })
 
@@ -483,33 +485,19 @@
   })
 
   /**
-   * 新增
+   * 名片编辑相关（保留用于CardDetailForm组件）
    */
   const editVisible = ref(false)
   const editMode = ref<'create' | 'edit'>('create')
-  const currentCard = ref<CardItem | null>(null)
-
-  const handleCardEdit = (row: CardItem) => {
-    currentCard.value = row
-    editMode.value = 'edit'
-    editVisible.value = true
-  }
 
   const handleAdd = () => {
-    currentCard.value = null
     editMode.value = 'create'
     editVisible.value = true
   }
 
-  /**
-   * 导出
-   */
-  const handleSaveCard = (data: CardItem) => {
-    if (editMode.value === 'create') {
-      cardTableData.push({ id: Date.now(), ...data })
-    } else if (currentCard.value) {
-      Object.assign(currentCard.value, data)
-    }
+  const handleSaveCard = (data: any) => {
+    console.log('保存名片数据:', data)
+    ElMessage.success('保存成功')
   }
 
   const handleExport = () => {
@@ -595,13 +583,50 @@
   /**
    * 卡片管理
    */
-  /**
-   * 卡片管理 - 打开弹窗
-   */
-  const cardDialogVisible = ref(false)
+  interface CardItem {
+    id?: number
+    title: string
+    intro: string
+    firstNameEn: string
+    lastNameEn: string
+    firstName: string
+    lastName: string
+    phone: string
+    email: string
+    company: string
+    product: number
+    trend: number
+  }
 
+  const cardDialogVisible = ref(false)
+  const cardSearch = ref('')
+  const cardPageSize = ref(10)
+  const cardCurrentPage = ref(1)
+
+  const cardTableData = reactive<CardItem[]>([
+    {
+      id: 1,
+      title: '【範例】陳嘉欣',
+      intro: avatar1,
+      firstNameEn: 'Jack',
+      lastNameEn: 'Ma',
+      firstName: '马',
+      lastName: '云',
+      phone: '123456789',
+      email: 'jack@example.com',
+      company: '阿里巴巴',
+      product: 12,
+      trend: 3
+    }
+  ])
+  const cardTotal = computed(() => cardTableData.length)
+
+  /**
+   * 打开卡片管理弹窗
+   */
   const handlePersonalCard = (row: MemberItem) => {
     console.log('卡片管理', row)
+    currentUser.value = row
     cardDialogVisible.value = true
   }
 
@@ -610,6 +635,56 @@
    */
   const handleCloseCardDialog = () => {
     cardDialogVisible.value = false
+  }
+
+  /**
+   * 搜索卡片
+   */
+  const handleCardSearch = () => {
+    console.log('搜索卡片:', cardSearch.value)
+  }
+
+  /**
+   * 新增卡片
+   */
+  const handleCardAdd = () => {
+    editMode.value = 'create'
+    editVisible.value = true
+  }
+
+  /**
+   * 预览卡片
+   */
+  const handleCardPreview = (row: CardItem) => {
+    console.log('预览', row)
+  }
+
+  /**
+   * 编辑卡片
+   */
+  const handleCardEditItem = (row: CardItem) => {
+    editMode.value = 'edit'
+    editVisible.value = true
+    console.log('编辑卡片', row)
+  }
+
+  /**
+   * 删除卡片
+   */
+  const handleCardDelete = (row: CardItem) => {
+    ElMessageBox.confirm('确定要删除这张名片吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+      .then(() => {
+        const idx = cardTableData.indexOf(row)
+        if (idx > -1) cardTableData.splice(idx, 1)
+        ElMessage.success('删除成功')
+      })
+      .catch(() => {
+        // 取消删除
+      })
   }
 
   /**
@@ -645,51 +720,4 @@
       jumpPage.value = ''
     }
   }
-  /**
-   * 卡片管理表格数据
-   */
-  interface CardItem {
-    id?: number
-    title: string
-    intro: string
-    firstNameEn: string
-    lastNameEn: string
-    firstName: string
-    lastName: string
-    phone: string
-    email: string
-    company: string
-    product: number
-    trend: number
-  }
-
-  const cardSearch = ref('')
-  const cardPageSize = ref(10)
-  const cardCurrentPage = ref(1)
-
-  const cardTableData = reactive<CardItem[]>([
-    {
-      id: 1,
-      title: '【範例】陳嘉欣',
-      intro: avatar1,
-      firstNameEn: 'Jack',
-      lastNameEn: 'Ma',
-      firstName: '马',
-      lastName: '云',
-      phone: '123456789',
-      email: 'jack@example.com',
-      company: '阿里巴巴',
-      product: 12,
-      trend: 3
-    }
-  ])
-  const cardTotal = computed(() => cardTableData.length)
-
-  const handleCardPreview = (row: CardItem) => {
-    console.log('预览', row)
-  }
-  // const handleCardDelete = (row: CardItem) => {
-  //   const idx = cardTableData.indexOf(row)
-  //   if (idx > -1) cardTableData.splice(idx, 1)
-  // }
 </script>

@@ -138,56 +138,63 @@
 
     <!-- 评论查看弹窗 -->
     <ElDialog v-model="commentsDialogVisible" title="评论列表" width="70%" :destroy-on-close="true">
-      <div class="mb-4">
-        <span class="text-g-600">会话：</span>
-        <span class="font-medium">{{ currentRecord?.title }}</span>
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <span class="text-g-600">会话：</span>
+          <span class="font-medium">{{ currentRecord?.title }}</span>
+        </div>
+        <ElInput
+          v-model="commentSearchKeyword"
+          placeholder="搜索用户或评论内容"
+          clearable
+          style="width: 300px"
+        >
+          <template #prefix>
+            <ElIcon><Search /></ElIcon>
+          </template>
+        </ElInput>
       </div>
       <div v-if="commentsDialogLoading" class="text-center py-10">
         <ElIcon class="is-loading"><Loading /></ElIcon>
         <p class="mt-2 text-g-500">加载中...</p>
       </div>
-      <div v-else-if="commentsList.length === 0" class="text-center text-g-500 py-10">
-        暂无评论
+      <div v-else-if="filteredCommentsList.length === 0" class="text-center text-g-500 py-10">
+        {{ commentSearchKeyword ? '没有找到匹配的评论' : '暂无评论' }}
       </div>
-      <ArtTable v-else :data="commentsList" style="width: 100%" :border="true" :stripe="true">
+      <ArtTable
+        v-else
+        :data="filteredCommentsList"
+        style="width: 100%"
+        :border="true"
+        :stripe="true"
+      >
         <template #default>
           <ElTableColumn label="ID" prop="id" width="80" align="center" />
-          <ElTableColumn label="用户" prop="user_id" width="120">
+          <ElTableColumn label="用户" width="150">
             <template #default="scope">
-              <span>USER-{{ scope.row.user_id }}</span>
+              <span>{{ scope.row.user }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="评论内容" prop="content" min-width="300" />
-          <ElTableColumn label="评论时间" prop="created_at" width="180" align="center">
+          <ElTableColumn label="评论内容" min-width="300">
+            <template #default="scope">
+              <span>{{ scope.row.content }}</span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="评论时间" width="180" align="center">
             <template #default="scope">
               {{
                 scope.row.created_at ? new Date(scope.row.created_at).toLocaleString('zh-CN') : '-'
               }}
             </template>
           </ElTableColumn>
-          <ElTableColumn
-            :label="$t('pages.commentRecord.operation')"
-            width="200"
-            align="center"
-            fixed="right"
-          >
+          <ElTableColumn label="操作" width="150" align="center" fixed="right">
             <template #default="scope">
-              <ElDropdown @command="(command) => handleCommentCommand(command, scope.row)">
-                <ElButton type="primary" size="small">
-                  {{ $t('pages.commentRecord.operation') }}
-                  <ElIcon class="el-icon--right"><ArrowDown /></ElIcon>
-                </ElButton>
-                <template #dropdown>
-                  <ElDropdownMenu>
-                    <ElDropdownItem command="edit">
-                      {{ $t('pages.commentRecord.edit') }}
-                    </ElDropdownItem>
-                    <ElDropdownItem command="delete">
-                      {{ $t('pages.commentRecord.delete') }}
-                    </ElDropdownItem>
-                  </ElDropdownMenu>
-                </template>
-              </ElDropdown>
+              <ElButton type="success" size="small" link @click="handleEditComment(scope.row)">
+                编辑
+              </ElButton>
+              <ElButton type="danger" size="small" link @click="handleDeleteComment(scope.row)">
+                删除
+              </ElButton>
             </template>
           </ElTableColumn>
         </template>
@@ -202,7 +209,7 @@
   import { fetchAdminRecords } from '@/api/admin'
   import { fetchComments, updateComment, deleteComment } from '@/api/social'
   import { ElMessage, ElMessageBox, ElIcon } from 'element-plus'
-  import { Loading, ArrowDown } from '@element-plus/icons-vue'
+  import { Loading, ArrowDown, Search } from '@element-plus/icons-vue'
 
   defineOptions({ name: 'CommentRecord' })
 
@@ -330,30 +337,91 @@
   const commentsList = ref<any[]>([])
   const currentRecord = ref<CommentItem | null>(null)
 
+  // 评论搜索关键词
+  const commentSearchKeyword = ref('')
+  // 所有评论数据
+  const allCommentsList = ref<any[]>([])
+  // 过滤后的评论列表
+  const filteredCommentsList = computed(() => {
+    if (!commentSearchKeyword.value) {
+      return allCommentsList.value
+    }
+    const keyword = commentSearchKeyword.value.toLowerCase()
+    return allCommentsList.value.filter(
+      (item) =>
+        item.user.toLowerCase().includes(keyword) || item.content.toLowerCase().includes(keyword)
+    )
+  })
+
   const handleViewComments = async (row: CommentItem) => {
     currentRecord.value = row
     commentsDialogVisible.value = true
     commentsDialogLoading.value = true
+    commentSearchKeyword.value = '' // 重置搜索
 
     try {
-      const res = await fetchComments(row.recordId!, {
+      const response = await fetchComments(row.recordId!, {
         page: 1,
         page_size: 100
       })
 
-      commentsList.value = res.items || []
-      console.log('评论列表:', commentsList.value)
+      console.log('评论API返回数据:', response)
+
+      if (response && Array.isArray(response.comments)) {
+        allCommentsList.value = response.comments.map((item: any) => ({
+          id: item.id,
+          user:
+            item.user?.nickname ||
+            item.user?.username ||
+            (item.user_id ? `USER-${item.user_id}` : '未知用户'),
+          content: item.content,
+          created_at: item.created_at,
+          like_count: item.like_count || 0,
+          replies: item.replies || []
+        }))
+      } else if (response && Array.isArray(response.items)) {
+        // 兼容 items 字段
+        allCommentsList.value = response.items.map((item: any) => ({
+          id: item.id,
+          user:
+            item.user?.nickname ||
+            item.user?.username ||
+            (item.user_id ? `USER-${item.user_id}` : '未知用户'),
+          content: item.content,
+          created_at: item.created_at,
+          like_count: item.like_count || 0,
+          replies: item.replies || []
+        }))
+      } else if (response && Array.isArray(response)) {
+        // 如果直接返回数组
+        allCommentsList.value = response.map((item: any) => ({
+          id: item.id,
+          user:
+            item.user?.nickname ||
+            item.user?.username ||
+            (item.user_id ? `USER-${item.user_id}` : '未知用户'),
+          content: item.content,
+          created_at: item.created_at,
+          like_count: item.like_count || 0,
+          replies: item.replies || []
+        }))
+      } else {
+        console.warn('评论数据格式不正确:', response)
+        allCommentsList.value = []
+      }
+
+      console.log('评论列表:', allCommentsList.value)
     } catch (error) {
       console.error('获取评论失败:', error)
       ElMessage.error('获取评论失败')
-      commentsList.value = []
+      allCommentsList.value = []
     } finally {
       commentsDialogLoading.value = false
     }
   }
 
   // 编辑评论
-  const handleEdit = async (comment: any) => {
+  const handleEditComment = async (comment: any) => {
     try {
       const { value: newContent } = await ElMessageBox.prompt('请输入新的评论内容', '编辑评论', {
         confirmButtonText: '确定',
@@ -369,6 +437,7 @@
       })
 
       if (newContent) {
+        // 调用更新评论接口，使用 comment_id
         await updateComment(comment.id, { content: newContent })
         ElMessage.success('编辑成功')
         // 重新加载评论列表
@@ -378,14 +447,14 @@
       }
     } catch (error) {
       if (error !== 'cancel') {
-        console.error('编辑失败:', error)
-        ElMessage.error('编辑失败')
+        console.error('编辑评论失败:', error)
+        ElMessage.error('编辑评论失败')
       }
     }
   }
 
   // 删除评论
-  const handleDelete = async (comment: any) => {
+  const handleDeleteComment = async (comment: any) => {
     try {
       await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
         confirmButtonText: '确定',
@@ -393,6 +462,7 @@
         type: 'warning'
       })
 
+      // 调用删除评论接口，使用 comment_id
       await deleteComment(comment.id)
       ElMessage.success('删除成功')
       // 重新加载评论列表
@@ -401,18 +471,9 @@
       }
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除失败')
-        console.error(error)
+        console.error('删除评论失败:', error)
+        ElMessage.error('删除评论失败')
       }
-    }
-  }
-
-  // 处理评论下拉菜单命令
-  const handleCommentCommand = (command: string, comment: any) => {
-    if (command === 'edit') {
-      handleEdit(comment)
-    } else if (command === 'delete') {
-      handleDelete(comment)
     }
   }
 

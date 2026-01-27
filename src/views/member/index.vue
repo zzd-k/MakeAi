@@ -399,10 +399,17 @@
     try {
       loading.value = true
 
-      // 构建查询参数
+      // 查询参数
       const params: any = {
         page: currentPage.value,
         page_size: pageSize.value
+      }
+
+      if (searchForm.memberId) {
+        params.user_id = searchForm.memberId
+      }
+      if (searchForm.nickname) {
+        params.search = searchForm.nickname
       }
 
       console.log('搜索参数:', params)
@@ -413,7 +420,7 @@
       console.log('API返回总数:', response.total)
 
       // 将API数据转换为表格数据格式
-      let filteredData = response.items.map((user) => ({
+      tableData.value = response.items.map((user) => ({
         memberId: String(user.id),
         nickname: user.nickname || user.username,
         avatar: user.avatar || avatar1,
@@ -428,24 +435,15 @@
         remark: '-'
       }))
 
-      // 前端过滤搜索（因为后端API不支持搜索参数）
-      if (searchForm.memberId) {
-        filteredData = filteredData.filter((item) => item.memberId.includes(searchForm.memberId))
-      }
-      if (searchForm.nickname) {
-        filteredData = filteredData.filter(
-          (item) =>
-            item.nickname && item.nickname.toLowerCase().includes(searchForm.nickname.toLowerCase())
-        )
-      }
+      // 使用后端返回的总数
+      total.value = response.total
 
-      tableData.value = filteredData
-      total.value = filteredData.length
-
-      console.log('过滤后数据条数:', tableData.value.length)
+      console.log('数据条数:', tableData.value.length, '总数:', total.value)
     } catch (error) {
       console.error('获取用户列表失败:', error)
       ElMessage.error('获取用户列表失败')
+      tableData.value = []
+      total.value = 0
     } finally {
       loading.value = false
     }
